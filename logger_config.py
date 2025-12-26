@@ -1,4 +1,18 @@
-"""Structured JSON logging configuration"""
+"""
+Centralized logging configuration for the log classification system
+
+Provides JSON-structured logging with context enrichment for
+production observability.
+
+Features:
+- JSON output format for structured log aggregation
+- Contextual fields (request_id, user_id, log_text)
+- Timestamp standardization
+- Log level filtering (INFO default)
+- Stream handler for real-time monitoring
+
+Integration: Compatible with ELK, Splunk, CloudWatch
+"""
 import logging
 import sys
 from datetime import datetime
