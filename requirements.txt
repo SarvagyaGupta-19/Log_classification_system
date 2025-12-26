@@ -1,3 +1,14 @@
+# Production Dependencies for Log Classification System
+# 
+# Architecture:
+#   - FastAPI REST API with async support
+#   - BERT embeddings for semantic classification
+#   - Groq API for LLM fallback processing
+#   - Scikit-learn for ML model training
+#
+# Installation: pip install -r requirements.txt
+# Python Version: 3.10+
+
 # Core Dependencies
 annotated-types==0.7.0
 anyio==4.9.0
