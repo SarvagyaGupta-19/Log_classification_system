@@ -1,4 +1,16 @@
-"""Classification orchestrator with waterfall ML pipeline"""
+"""
+Classification orchestrator with waterfall ML pipeline
+
+This module implements the core classification logic using a three-tier
+waterfall approach:
+1. Regex: Fast pattern matching for common log types (~1ms)
+2. BERT: ML embeddings for complex patterns (~50ms) 
+3. LLM: AI-powered classification for edge cases (~300ms)
+
+The waterfall strategy optimizes for both speed and cost by using
+cheaper/faster methods first and falling back to expensive methods
+only when needed.
+"""
 from processor_regex import classify_with_regex
 from processor_bert import classify_with_bert, get_bert_classifier
 from processor_llm import classify_with_llm
