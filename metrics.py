@@ -1,4 +1,17 @@
-"""Performance metrics and monitoring"""
+"""
+Performance metrics and real-time monitoring for classification system
+
+Thread-safe metrics collection for production observability.
+
+Tracked Metrics:
+- Total classifications processed
+- Success/failure counts per processor (regex, BERT, LLM)
+- Response time statistics (average, min, max)
+- Throughput calculation (logs per second)
+
+Concurrency: Thread-safe with lock-based synchronization
+Use Case: Health checks, performance dashboards, alerting
+"""
 from dataclasses import dataclass, field
 from typing import Dict, List
 from datetime import datetime
