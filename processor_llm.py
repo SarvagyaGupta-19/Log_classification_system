@@ -1,4 +1,18 @@
-"""LLM-based classification using Groq API"""
+"""
+LLM-based classification using Groq API
+
+This module integrates with Groq's high-performance LLM API for
+complex log classification that requires semantic understanding.
+
+LLM Configuration:
+- Model: llama-3.3-70b-versatile (70B parameters)
+- Provider: Groq (fast inference, <1s response time)
+- Temperature: 0.5 (balanced between creativity and consistency)
+- Retry Strategy: 3 attempts with exponential backoff
+
+Used primarily for LegacyCRM logs and edge cases where regex and
+BERT don't provide confident classifications.
+"""
 from dotenv import load_dotenv
 from groq import Groq
 import json
