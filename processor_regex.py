@@ -1,4 +1,17 @@
-"""Pattern-based log classification using regex"""
+"""
+Pattern-based log classification using regex
+
+This is the first tier in the classification waterfall, providing
+ultra-fast pattern matching for common log types.
+
+Supported Patterns:
+- User Actions: login, logout, account creation
+- System Notifications: backups, updates, disk operations
+- File Operations: uploads, deletions
+- System Events: reboots, shutdowns
+
+Performance: <1ms per log, no external dependencies required.
+"""
 import re
 from typing import Optional, Dict
 from logger_config import get_logger
