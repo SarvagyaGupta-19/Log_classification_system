@@ -1,4 +1,17 @@
-"""BERT-based log classification with embeddings"""
+"""
+BERT-based log classification with embeddings
+
+This module uses sentence-transformers for semantic understanding of log messages.
+
+Model Details:
+- Embedding Model: all-MiniLM-L6-v2 (80MB, fast inference)
+- Classification: LogisticRegression trained on 10K+ logs
+- Confidence Threshold: 0.5 (adjustable via config)
+- Average Latency: 50-100ms per log
+
+The BERT classifier provides a balance between accuracy and speed,
+handling logs that don't match simple regex patterns.
+"""
 import joblib
 from sentence_transformers import SentenceTransformer
 from typing import Optional, Tuple
