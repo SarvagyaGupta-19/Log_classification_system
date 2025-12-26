@@ -1,0 +1,51 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# Environment files
+.env
+*.env
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Output files from your app
+resources/output.csv
+resources/bar_plot.png
+
+# Logs
+*.log
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# VS Code settings
+.vscode/
+
+# PyCharm/JetBrains settings
+.idea/
+
+# Static cache
+static/*.cache
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Pip cache
+pip-wheel-metadata/
+__pypackages__/
+
+# Uploaded files (if applicable)
+uploads/

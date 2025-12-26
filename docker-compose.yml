@@ -1,0 +1,32 @@
+# Docker Compose for Log Classification System
+# Owner: DevOps Engineer
+
+version: '3.8'
+
+services:
+  log-classifier:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: log-classifier
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - GROQ_API_KEY=${GROQ_API_KEY}
+    volumes:
+      - ./resources:/app/resources
+      - ./models:/app/models
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  default:
+    name: log-classifier-network
