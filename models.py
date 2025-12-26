@@ -1,4 +1,22 @@
-"""Pydantic models for request/response validation"""
+"""
+Pydantic models for request/response validation and API contracts
+
+Type-safe data models ensuring API contract enforcement at runtime.
+
+Model Hierarchy:
+- LogRequest: Incoming classification requests (log_text, source, user_id)
+- LogResponse: Classification results with confidence scores
+- BulkClassificationRequest: CSV batch processing
+- HealthResponse: System health status
+
+Validation Features:
+- Non-empty string enforcement for log_text
+- Enum constraints for log sources
+- Confidence score boundaries (0.0-1.0)
+- Optional field handling with None defaults
+
+FastAPI Integration: Auto-generates OpenAPI documentation
+"""
 from pydantic import BaseModel, Field, validator
 from typing import Optional, List
 from datetime import datetime
