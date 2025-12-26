@@ -1,4 +1,22 @@
-"""Centralized configuration management"""
+"""
+Centralized configuration management with environment variable support
+
+12-factor app principles: All config through environment variables.
+
+Configuration Categories:
+- Application: Debug mode, logging level
+- Server: Host, port, CORS origins
+- ML Models: BERT model name, confidence thresholds
+- API Keys: Groq API key for LLM (required)
+- File Paths: Model persistence locations
+
+Environment Loading:
+- Reads from .env file (development)
+- Falls back to environment variables (production)
+- Provides sensible defaults where applicable
+
+Caching: @lru_cache ensures singleton behavior
+"""
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 import os
