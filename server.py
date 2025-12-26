@@ -1,4 +1,14 @@
-"""FastAPI server for log classification"""
+"""
+FastAPI server for log classification
+
+This module provides a production-ready REST API for log classification.
+It implements:
+- RESTful endpoints for single and batch classification
+- Health monitoring and metrics tracking
+- CSV file processing with result storage
+- Interactive API documentation via Swagger UI
+- CORS support for cross-origin requests
+"""
 import pandas as pd
 import os
 import uuid
