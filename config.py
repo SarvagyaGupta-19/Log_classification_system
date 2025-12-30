@@ -1,4 +1,4 @@
-"""
+""""
 Centralized configuration management with environment variable support
 
 12-factor app principles: All config through environment variables.
