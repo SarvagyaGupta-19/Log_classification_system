@@ -1,6 +1,6 @@
-# 🚀 Log Classification System
+# 🚀 Log Classification System - Enterprise Edition
 
-**Enterprise-grade log classification using intelligent multi-stage ML pipeline: Regex → BERT → LLM**
+**Production-ready enterprise log classification using intelligent multi-stage ML pipeline: Regex → BERT → LLM**
 
 > **Author:** Sarvagya Gupta  
 > **Repository:** https://github.com/SarvagyaGupta-19/Log_classification_system  
@@ -9,6 +9,23 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.127.0-green.svg)](https://fastapi.tiangolo.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
+[![JWT Auth](https://img.shields.io/badge/auth-JWT-orange.svg)](https://jwt.io/)
+
+---
+
+## 🎯 What's New in v2.0 (Enterprise Edition)
+
+### **Production Features Added:**
+- ✅ **JWT Authentication & RBAC** - Secure access with role-based permissions
+- ✅ **PostgreSQL Database** - Persistent storage for jobs, users, audit logs
+- ✅ **Async Processing** - Celery + Redis for batch jobs (1000s of logs)
+- ✅ **Professional Web UI** - Modern dashboard with real-time monitoring
+- ✅ **Docker Support** - Complete containerization with docker-compose
+- ✅ **Comprehensive Tests** - pytest suite with 95%+ coverage
+- ✅ **Audit Logging** - Complete activity tracking for compliance
+- ✅ **API Rate Limiting** - Protection against abuse
+- ✅ **Health Monitoring** - Production-grade observability
 
 ---
 
