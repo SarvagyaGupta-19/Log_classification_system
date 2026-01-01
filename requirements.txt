@@ -134,6 +134,24 @@ starlette==0.46.2
 sympy==1.14.0
 threadpoolctl==3.6.0
 tokenizers==0.21.2
+
+# Security and Authentication (Production Hardening)
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.2.1
+
+# Database Layer (Persistence)
+sqlalchemy==2.0.36
+alembic==1.15.0
+psycopg2-binary==2.9.10
+
+# Async Task Queue (Scalability)
+celery==5.4.0
+redis==5.2.1
+
+# Templates
+jinja2==3.1.6
+
 torch==2.7.1
 tqdm==4.67.1
 transformers==4.52.4

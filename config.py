@@ -56,6 +56,19 @@ class Settings(BaseSettings):
     # LLM API
     groq_api_key: str = ""
     
+    # Security
+    jwt_secret_key: str = "change-this-secret-key-in-production"
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+    
+    # Database
+    database_url: str = "sqlite:///./log_classifier.db"  # Change to PostgreSQL in production
+    
+    # Redis (for Celery)
+    redis_url: str = "redis://localhost:6379/0"
+    celery_broker_url: str = "redis://localhost:6379/0"
+    celery_result_backend: str = "redis://localhost:6379/0"
+    
     # Monitoring
     enable_metrics: bool = True
     log_level: str = "INFO"
