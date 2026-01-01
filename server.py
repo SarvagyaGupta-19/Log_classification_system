@@ -1,21 +1,28 @@
 """
-FastAPI server for log classification
+FastAPI server for log classification - Production Ready
 
-This module provides a production-ready REST API for log classification.
+This module provides an enterprise-grade REST API for log classification.
 It implements:
 - RESTful endpoints for single and batch classification
+- JWT Authentication and RBAC
+- Database persistence with SQLAlchemy
+- Async processing with Celery
 - Health monitoring and metrics tracking
 - CSV file processing with result storage
 - Interactive API documentation via Swagger UI
 - CORS support for cross-origin requests
+- Professional Web UI Dashboard
 """
 import pandas as pd
 import os
 import uuid
-from datetime import datetime
-from fastapi import FastAPI, UploadFile, HTTPException, Request, status
-from fastapi.responses import FileResponse, JSONResponse
+from datetime import datetime, timedelta
+from fastapi import FastAPI, UploadFile, HTTPException, Request, status, Depends, Form
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.security import OAuth2PasswordRequestForm
 from contextlib import asynccontextmanager
 import time
 
@@ -37,6 +44,15 @@ from exceptions import FileProcessingError, ClassificationError
 from processor_bert import get_bert_classifier
 from processor_llm import get_llm_classifier
 
+# Import new modules
+from auth import (
+    authenticate_user, create_access_token, create_refresh_token,
+    get_current_active_user, require_admin, require_analyst, require_viewer,
+    User, Token, ACCESS_TOKEN_EXPIRE_MINUTES
+)
+from database import init_db, get_db, create_classification_job, update_job_status, JobStatus
+from tasks import classify_csv_async, get_task_status
+
 # Setup logging
 setup_logging(settings.log_level)
 logger = get_logger(__name__)
@@ -50,6 +66,13 @@ async def lifespan(app: FastAPI):
         "version": settings.app_version,
         "environment": settings.environment
     })
+    
+    # Initialize database
+    try:
+        init_db()
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.error("Database initialization failed", extra={"error": str(e)})
     
     # Warm up models on startup
     try:
@@ -74,9 +97,13 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
-    description="Production-grade log classification system with multi-stage ML pipeline",
+    description="Enterprise log classification system with multi-stage ML pipeline, authentication, and monitoring",
     lifespan=lifespan
 )
+
+# Mount static files and templates
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 # CORS middleware
 app.add_middleware(
