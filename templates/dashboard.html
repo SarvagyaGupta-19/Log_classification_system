@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Classification Dashboard - Enterprise ML Platform</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-layer-group"></i>
+                <span>LogClassifier</span>
+            </div>
+            <div class="user-badge">
+                <span id="user-role" class="role-badge">Admin</span>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="#dashboard" class="nav-item active">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#classify" class="nav-item">
+                <i class="fas fa-upload"></i>
+                <span>Classify Logs</span>
+            </a>
+            <a href="#jobs" class="nav-item">
+                <i class="fas fa-tasks"></i>
+                <span>Jobs History</span>
+            </a>
+            <a href="#analytics" class="nav-item">
+                <i class="fas fa-chart-pie"></i>
+                <span>Analytics</span>
+            </a>
+            <a href="#settings" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <button class="btn-logout" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1 id="page-title">Dashboard Overview</h1>
+                <p class="subtitle">Real-time log classification monitoring</p>
+            </div>
+            <div class="header-right">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search jobs, logs...">
+                </div>
+                <button class="btn-notification">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </button>
+                <div class="user-profile">
+                    <img src="/static/images/avatar.svg" alt="User" class="avatar">
+                    <span id="username">Admin User</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard View -->
+        <section id="dashboard-view" class="content-section active">
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card primary">
+                    <div class="stat-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="total-logs">0</h3>
+                        <p>Total Logs Classified</p>
+                        <span class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i> 12.5%
+                        </span>
+                    </div>
+                </div>
+
+                <div class="stat-card success">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="accuracy">98.2%</h3>
+                        <p>Classification Accuracy</p>
+                        <span class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i> 2.1%
+                        </span>
+                    </div>
+                </div>
+
+                <div class="stat-card warning">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="avg-time">45ms</h3>
+                        <p>Avg. Processing Time</p>
+                        <span class="stat-change negative">
+                            <i class="fas fa-arrow-down"></i> 5ms
+                        </span>
+                    </div>
+                </div>
+
+                <div class="stat-card info">
+                    <div class="stat-icon">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="active-jobs">5</h3>
+                        <p>Active Jobs</p>
+                        <span class="stat-label">Processing</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Classification Methods</h3>
+                        <select class="chart-filter">
+                            <option>Last 24 hours</option>
+                            <option>Last 7 days</option>
+                            <option>Last 30 days</option>
+                        </select>
+                    </div>
+                    <canvas id="methodsChart"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Log Categories Distribution</h3>
+                        <button class="btn-export"><i class="fas fa-download"></i></button>
+                    </div>
+                    <canvas id="categoriesChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="activity-section">
+                <div class="section-header">
+                    <h3>Recent Classification Jobs</h3>
+                    <a href="#jobs" class="link-view-all">View All <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Job ID</th>
+                                <th>File Name</th>
+                                <th>Logs Count</th>
+                                <th>Status</th>
+                                <th>Processing Time</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-jobs-table">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Classify View -->
+        <section id="classify-view" class="content-section">
+            <div class="upload-container">
+                <div class="upload-area" id="dropZone">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <h3>Drag & Drop CSV File</h3>
+                    <p>or click to browse</p>
+                    <input type="file" id="fileInput" accept=".csv" hidden>
+                    <button class="btn-primary" onclick="document.getElementById('fileInput').click()">
+                        Select File
+                    </button>
+                </div>
+
+                <div class="file-info" id="fileInfo" style="display:none;">
+                    <div class="file-details">
+                        <i class="fas fa-file-csv"></i>
+                        <div>
+                            <h4 id="fileName"></h4>
+                            <p id="fileSize"></p>
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="uploadFile()">
+                        <i class="fas fa-rocket"></i> Start Classification
+                    </button>
+                </div>
+
+                <div class="processing-status" id="processingStatus" style="display:none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <p id="progressText">Processing: 0%</p>
+                </div>
+            </div>
+
+            <div class="classification-options">
+                <h3>Classification Settings</h3>
+                <div class="options-grid">
+                    <div class="option-item">
+                        <label>
+                            <input type="checkbox" checked>
+                            <span>Use BERT Classifier</span>
+                        </label>
+                    </div>
+                    <div class="option-item">
+                        <label>
+                            <input type="checkbox" checked>
+                            <span>Enable LLM Fallback</span>
+                        </label>
+                    </div>
+                    <div class="option-item">
+                        <label>
+                            <span>Confidence Threshold</span>
+                            <input type="range" min="0" max="1" step="0.1" value="0.5">
+                            <span class="value">0.5</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
