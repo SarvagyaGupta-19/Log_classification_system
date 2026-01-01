@@ -67,32 +67,40 @@ class TokenData(BaseModel):
 
 
 # Mock user database (replace with real database)
-fake_users_db: Dict[str, UserInDB] = {
-    "admin": UserInDB(
-        username="admin",
-        email="admin@logclassifier.com",
-        full_name="System Administrator",
-        role=UserRole.ADMIN,
-        hashed_password=pwd_context.hash("admin123"),
-        disabled=False
-    ),
-    "analyst": UserInDB(
-        username="analyst",
-        email="analyst@logclassifier.com",
-        full_name="Data Analyst",
-        role=UserRole.ANALYST,
-        hashed_password=pwd_context.hash("analyst123"),
-        disabled=False
-    ),
-    "demo": UserInDB(
-        username="demo",
-        email="demo@logclassifier.com",
-        full_name="Demo User",
-        role=UserRole.VIEWER,
-        hashed_password=pwd_context.hash("demo123"),
-        disabled=False
-    )
-}
+fake_users_db: Dict[str, UserInDB] = {}
+
+
+def init_demo_users():
+    """Initialize demo users with hashed passwords"""
+    global fake_users_db
+    if not fake_users_db:
+        fake_users_db = {
+            "admin": UserInDB(
+                username="admin",
+                email="admin@logclassifier.com",
+                full_name="System Administrator",
+                role=UserRole.ADMIN,
+                hashed_password=pwd_context.hash("admin123"),
+                disabled=False
+            ),
+            "analyst": UserInDB(
+                username="analyst",
+                email="analyst@logclassifier.com",
+                full_name="Data Analyst",
+                role=UserRole.ANALYST,
+                hashed_password=pwd_context.hash("analyst123"),
+                disabled=False
+            ),
+            "demo": UserInDB(
+                username="demo",
+                email="demo@logclassifier.com",
+                full_name="Demo User",
+                role=UserRole.VIEWER,
+                hashed_password=pwd_context.hash("demo123"),
+                disabled=False
+            )
+        }
+    return fake_users_db
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -107,8 +115,9 @@ def get_password_hash(password: str) -> str:
 
 def get_user(username: str) -> Optional[UserInDB]:
     """Retrieve user from database"""
-    if username in fake_users_db:
-        return fake_users_db[username]
+    users = init_demo_users()
+    if username in users:
+        return users[username]
     return None
 
 

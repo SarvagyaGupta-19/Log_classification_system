@@ -19,8 +19,8 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from server import app
-from auth import create_access_token
-from database import init_db, get_db, create_user, get_password_hash
+from auth import create_access_token, get_password_hash
+from database import init_db, get_db, create_user
 
 client = TestClient(app)
 
@@ -187,7 +187,7 @@ class TestDatabase:
                 role="viewer"
             )
             assert user.username is not None
-            assert user.role == "viewer"
+            assert str(user.role) == "viewer"
     
     def test_job_creation(self):
         """Test classification job creation"""
@@ -202,7 +202,9 @@ class TestDatabase:
                 total_logs=100
             )
             assert job.job_id is not None
-            assert job.total_logs == 100
+            # Note: SQLAlchemy Column comparison
+            db.refresh(job)
+            assert job.total_logs == 100  # type: ignore
 
 
 # API Integration Tests

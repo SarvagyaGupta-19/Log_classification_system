@@ -139,6 +139,7 @@ tokenizers==0.21.2
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 bcrypt==4.2.1
+email-validator==2.2.0
 
 # Database Layer (Persistence)
 sqlalchemy==2.0.36
