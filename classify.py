@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 metrics = get_metrics()
 
 
-def classify(logs: List[Tuple[str, str]]) -> List[str]:
+def classify(logs: List[Tuple[str, str]]) -> List[dict]:
     """
     Classify multiple logs
     
@@ -32,24 +32,29 @@ def classify(logs: List[Tuple[str, str]]) -> List[str]:
         logs: List of (source, log_message) tuples
         
     Returns:
-        List of classification labels
+        List of dicts with keys: category, method, confidence, severity
     """
-    labels = []
+    results = []
     for source, log_msg in logs:
         try:
-            label = classify_log(source, log_msg)
-            labels.append(label)
+            result = classify_log(source, log_msg)
+            results.append(result)
         except Exception as e:
             logger.error("Classification failed for log", extra={
                 "source": source,
                 "error": str(e),
                 "message": log_msg[:100]
             })
-            labels.append("Unclassified")
-    return labels
+            results.append({
+                "category": "Unclassified",
+                "method": "error",
+                "confidence": 0.0,
+                "severity": "LOW"
+            })
+    return results
 
 
-def classify_log(source: str, log_msg: str) -> str:
+def classify_log(source: str, log_msg: str) -> dict:
     """
     Classify a single log with waterfall strategy
     
@@ -58,11 +63,14 @@ def classify_log(source: str, log_msg: str) -> str:
         log_msg: Log message
         
     Returns:
-        Classification label
+        Dict with keys: category, method, confidence, severity
     """
+    from severity_mapper import get_severity
+    
     start_time = time.time()
     method = ClassificationMethod.UNCLASSIFIED
     error = False
+    confidence = 0.0
     
     try:
         # Strategy: LegacyCRM uses LLM, others use Regex -> BERT fallback
@@ -70,16 +78,27 @@ def classify_log(source: str, log_msg: str) -> str:
             logger.debug("Using LLM for LegacyCRM", extra={"source": source})
             label = classify_with_llm(log_msg)
             method = ClassificationMethod.LLM
+            confidence = 0.85  # LLM typically high confidence
         else:
             # Try regex first (fastest)
             label = classify_with_regex(log_msg)
             if label:
                 method = ClassificationMethod.REGEX
+                confidence = 0.95  # Regex is deterministic
             else:
                 # Fallback to BERT
                 logger.debug("Regex failed, using BERT", extra={"source": source})
-                label = classify_with_bert(log_msg)
+                bert_result = classify_with_bert(log_msg)
+                # BERT may return string or tuple (label, confidence)
+                if isinstance(bert_result, tuple):
+                    label, confidence = bert_result
+                else:
+                    label = bert_result
+                    confidence = 0.80  # Default BERT confidence
                 method = ClassificationMethod.BERT
+        
+        # Get severity
+        severity = get_severity(label).value
         
         # Record metrics
         processing_time_ms = (time.time() - start_time) * 1000
@@ -89,10 +108,17 @@ def classify_log(source: str, log_msg: str) -> str:
             "source": source,
             "method": method.value,
             "label": label,
+            "confidence": confidence,
+            "severity": severity,
             "processing_time_ms": processing_time_ms
         })
         
-        return label
+        return {
+            "category": label,
+            "method": method.value,
+            "confidence": confidence,
+            "severity": severity
+        }
         
     except Exception as e:
         error = True
@@ -104,7 +130,13 @@ def classify_log(source: str, log_msg: str) -> str:
             "error": str(e),
             "message": log_msg[:100]
         })
-        return "Unclassified"
+        
+        return {
+            "category": "Unclassified",
+            "method": "error",
+            "confidence": 0.0,
+            "severity": "LOW"
+        }
 
 
 def classify_csv(input_file: str) -> str:
@@ -132,7 +164,13 @@ def classify_csv(input_file: str) -> str:
             raise ValueError(f"Missing required columns: {missing_cols}")
         
         # Perform classification
-        df["target_label"] = classify(list(zip(df["source"], df["log_message"])))
+        results = classify(list(zip(df["source"], df["log_message"])))
+        
+        # Add classification results to DataFrame
+        df["target_label"] = [r["category"] for r in results]
+        df["method"] = [r["method"] for r in results]
+        df["confidence"] = [r["confidence"] for r in results]
+        df["severity"] = [r["severity"] for r in results]
         
         # Save results
         os.makedirs("resources", exist_ok=True)

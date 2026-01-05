@@ -17,6 +17,7 @@ from sentence_transformers import SentenceTransformer
 from typing import Optional, Tuple
 import numpy as np
 from functools import lru_cache
+import threading
 from logger_config import get_logger
 from exceptions import ModelLoadError, ClassificationError
 from config import settings
@@ -126,15 +127,19 @@ class BERTClassifier:
             return False
 
 
-# Global instance
+# Global instance with thread-safe initialization
 _classifier: Optional[BERTClassifier] = None
+_classifier_lock = threading.Lock()
 
 
 def get_bert_classifier() -> BERTClassifier:
-    """Get or create BERT classifier instance"""
+    """Get or create BERT classifier instance (thread-safe singleton)"""
     global _classifier
     if _classifier is None:
-        _classifier = BERTClassifier()
+        with _classifier_lock:
+            # Double-check locking pattern
+            if _classifier is None:
+                _classifier = BERTClassifier()
     return _classifier
 
 

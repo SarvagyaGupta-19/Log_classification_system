@@ -65,11 +65,22 @@ class LLMClassifier:
             })
             return "Unclassified"
         
-        prompt = f'''Classify the log message into one of these categories: 
-      Workflow Error, Deprecation Warning.
-    If you can't figure out a category, use "Unclassified".
-    Put the category inside <category> </category> tags. 
-    Log message: {log_msg}'''
+        # Updated to match all 9 model categories
+        prompt = f'''Classify the log message into ONE of these exact categories:
+    1. HTTP Status - HTTP requests/responses with status codes
+    2. Security Alert - Security violations, unauthorized access, suspicious activity
+    3. System Notification - System operations, backups, updates, file operations
+    4. Error - General errors, failures, exceptions
+    5. Resource Usage - Memory, CPU, disk usage information
+    6. Critical Error - Severe errors requiring immediate attention
+    7. User Action - User logins, logouts, account operations
+    8. Workflow Error - Workflow or process failures
+    9. Deprecation Warning - Deprecated feature warnings
+
+If none match, use "Unclassified".
+Return ONLY the category name inside <category></category> tags.
+
+Log message: {log_msg}'''
         
         for attempt in range(self.max_retries):
             try:

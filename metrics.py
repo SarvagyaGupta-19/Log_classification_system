@@ -52,21 +52,21 @@ class Metrics:
     
     def get_average_processing_time(self) -> float:
         """Get average processing time in ms"""
-        with self._lock:
-            successful = self.total_classifications - self.error_count
-            if successful == 0:
-                return 0.0
-            return self.total_processing_time_ms / successful
+        # This method is now lock-free and expects caller to hold lock if needed
+        successful = self.total_classifications - self.error_count
+        if successful == 0:
+            return 0.0
+        return self.total_processing_time_ms / successful
     
     def get_error_rate(self) -> float:
         """Get error rate as percentage"""
-        with self._lock:
-            if self.request_count == 0:
-                return 0.0
-            return (self.error_count / self.request_count) * 100
+        # This method is now lock-free and expects caller to hold lock if needed
+        if self.request_count == 0:
+            return 0.0
+        return (self.error_count / self.request_count) * 100
     
     def get_uptime_seconds(self) -> float:
-        """Get uptime in seconds"""
+        """Get uptime in seconds - no lock needed"""
         return time.time() - self.start_time
     
     def to_dict(self) -> dict:
