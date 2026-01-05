@@ -1,39 +1,26 @@
 """
-FastAPI server for log classification - Production Ready
+FastAPI server for log classification with visualization
 
-This module provides an enterprise-grade REST API for log classification.
-It implements:
-- RESTful endpoints for single and batch classification
-- JWT Authentication and RBAC
-- Database persistence with SQLAlchemy
-- Async processing with Celery
-- Health monitoring and metrics tracking
-- CSV file processing with result storage
+This module provides a REST API for log classification with:
+- Single and batch log classification
+- Multiple visualization types (bar charts, pie charts, dashboards)
+- Severity analysis and insights
+- CSV file processing with result download
 - Interactive API documentation via Swagger UI
-- CORS support for cross-origin requests
+- Health monitoring and metrics tracking
 - Professional Web UI Dashboard
 """
 import pandas as pd
 import os
 import uuid
-from datetime import datetime, timedelta
-from fastapi import FastAPI, UploadFile, HTTPException, Request, status, Depends, Form
-from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
+from datetime import datetime
+from fastapi import FastAPI, UploadFile, HTTPException, Request, status
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.security import OAuth2PasswordRequestForm
 from contextlib import asynccontextmanager
 import time
-
-# Optional matplotlib import for plotting
-try:
-    import matplotlib
-    matplotlib.use('Agg')  # Use non-interactive backend
-    import matplotlib.pyplot as plt
-    MATPLOTLIB_AVAILABLE = True
-except ImportError:
-    MATPLOTLIB_AVAILABLE = False
 
 from classify import classify
 from config import settings
@@ -42,16 +29,11 @@ from metrics import get_metrics
 from models import ClassificationResponse, HealthStatus, ErrorResponse, MetricsResponse
 from exceptions import FileProcessingError, ClassificationError
 from processor_bert import get_bert_classifier
-from processor_llm import get_llm_classifier
-
-# Import new modules
-from auth import (
-    authenticate_user, create_access_token, create_refresh_token,
-    get_current_active_user, require_admin, require_analyst, require_viewer,
-    User, Token, ACCESS_TOKEN_EXPIRE_MINUTES
-)
-from database import init_db, get_db, create_classification_job, update_job_status, JobStatus
-from tasks import classify_csv_async, get_task_status
+from visualization import LogVisualizer, create_insights_report
+from severity_mapper import get_severity, get_severity_icon, get_severity_stats
+from csv_mapper import smart_csv_mapping, format_mapping_summary
+from log_converter import parse_plain_text, parse_timestamped_logs, parse_syslog, parse_json_logs, parse_apache_logs
+import io
 
 # Setup logging
 setup_logging(settings.log_level)
@@ -67,23 +49,8 @@ async def lifespan(app: FastAPI):
         "environment": settings.environment
     })
     
-    # Initialize database
-    try:
-        init_db()
-        logger.info("Database initialized successfully")
-    except Exception as e:
-        logger.error("Database initialization failed", extra={"error": str(e)})
-    
-    # Warm up models on startup
-    try:
-        logger.info("Warming up models...")
-        bert_classifier = get_bert_classifier()
-        logger.info("BERT model loaded successfully")
-        
-        # LLM is lazy-loaded when needed
-        logger.info("Application startup complete")
-    except Exception as e:
-        logger.error("Failed to load models", extra={"error": str(e)})
+    # Server starts immediately - models load on first use
+    logger.info("Server ready - models will load on first classification request")
     
     yield
     
@@ -97,7 +64,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
-    description="Enterprise log classification system with multi-stage ML pipeline, authentication, and monitoring",
+    description="Log classification system with multi-stage ML pipeline, severity analysis, and interactive visualizations",
     lifespan=lifespan
 )
 
@@ -108,9 +75,13 @@ templates = Jinja2Templates(directory="templates")
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://localhost:3000",
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
@@ -191,8 +162,8 @@ async def health_check():
         llm_healthy = True  # Assume healthy, will fail gracefully if not
         
         services = {
-            "bert_model": "healthy" if bert_healthy else "unhealthy",
-            "llm_api": "healthy" if llm_healthy else "degraded",
+            "classification_engine": "healthy" if bert_healthy else "unhealthy",
+            "secondary_classifier": "healthy" if llm_healthy else "degraded",
             "file_system": "healthy" if os.path.exists(settings.resources_dir) else "unhealthy"
         }
         
@@ -218,27 +189,40 @@ async def get_metrics_endpoint():
     Get application metrics
     Returns classification statistics and performance metrics
     """
-    metrics_data = metrics.to_dict()
-    return MetricsResponse(
-        total_classifications=metrics_data["total_classifications"],
-        classifications_by_method=metrics_data["classifications_by_method"],
-        average_processing_time_ms=metrics_data["average_processing_time_ms"],
-        error_rate=metrics_data["error_rate"],
-        uptime_seconds=metrics_data["uptime_seconds"]
-    )
+    try:
+        # Use lock to safely read all metrics at once
+        with metrics._lock:
+            total_class = metrics.total_classifications
+            methods = metrics.classifications_by_method.copy()
+            avg_time = metrics.get_average_processing_time()
+            err_rate = metrics.get_error_rate()
+        
+        # Get uptime without lock (time.time() is thread-safe)
+        uptime = metrics.get_uptime_seconds()
+        
+        return MetricsResponse(
+            total_classifications=total_class,
+            classifications_by_method=methods,
+            average_processing_time_ms=avg_time,
+            error_rate=err_rate,
+            uptime_seconds=uptime
+        )
+    except Exception as e:
+        logger.error(f"Metrics error: {e}")
+        # Return empty metrics instead of failing
+        return MetricsResponse(
+            total_classifications=0,
+            classifications_by_method={"regex": 0, "bert": 0, "llm": 0},
+            average_processing_time_ms=0.0,
+            error_rate=0.0,
+            uptime_seconds=0.0
+        )
 
 
 @app.get("/", tags=["Info"])
 async def root():
-    """Root endpoint with API information"""
-    return {
-        "name": settings.app_name,
-        "version": settings.app_version,
-        "environment": settings.environment,
-        "docs": "/docs",
-        "health": "/health",
-        "metrics": "/metrics"
-    }
+    """Root endpoint - redirects to dashboard"""
+    return RedirectResponse(url="/dashboard", status_code=302)
 
 
 # ─────────────────────────────────────────────
@@ -250,16 +234,31 @@ async def classify_logs(file: UploadFile, request: Request):
     """
     Classify logs from uploaded CSV file
     
-    - **file**: CSV file with 'source' and 'log_message' columns
-    - Returns: Classified results as CSV download
+    - **file**: CSV file or raw log file (.csv, .log, .txt, .json, .jsonl)
+    - Returns: JSON response with classification summary and file path
+    
+    Supported formats:
+    - CSV: Directly processed (columns auto-detected)
+    - Plain text (.log, .txt): One log per line
+    - JSON (.json, .jsonl): One JSON object per line
+    - Auto-detection for timestamped and syslog formats
     """
     request_id = getattr(request.state, "request_id", "unknown")
     
-    # Validate file type
-    if not file.filename.endswith('.csv'):
+    # Validate file type - accept CSV and raw log files
+    if not file.filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File must be a CSV file"
+            detail="No file uploaded"
+        )
+    
+    allowed_extensions = ['.csv', '.log', '.txt', '.json', '.jsonl']
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    
+    if file_ext not in allowed_extensions:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported file type. Allowed: {', '.join(allowed_extensions)}"
         )
     
     # Check file size (prevent DoS)
@@ -288,17 +287,158 @@ async def classify_logs(file: UploadFile, request: Request):
         )
     
     try:
-        # Read CSV
-        df = pd.read_csv(file.file)
+        df = None
+        encoding_used = None
+        conversion_info = None
         
-        # Validate required columns
-        required_columns = ["source", "log_message"]
-        missing_columns = [col for col in required_columns if col not in df.columns]
-        if missing_columns:
+        # Determine if conversion is needed
+        if file_ext == '.csv':
+            # CSV file - read directly with encoding fallback
+            encodings = ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252', 'utf-16']
+            
+            for encoding in encodings:
+                try:
+                    await file.seek(0)
+                    df = pd.read_csv(file.file, encoding=encoding, on_bad_lines='skip')
+                    encoding_used = encoding
+                    break
+                except (UnicodeDecodeError, pd.errors.ParserError):
+                    continue
+            
+            if df is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Unable to read CSV file. Please ensure it's properly formatted and uses standard encoding (UTF-8, Latin-1, etc.)"
+                )
+            
+            # Log encoding if non-standard
+            if encoding_used != 'utf-8':
+                logger.warning(f"CSV read with {encoding_used} encoding", extra={
+                    "request_id": request_id,
+                    "encoding": encoding_used
+                })
+        
+        else:
+            # Raw log file - convert to CSV format
+            logger.info(f"Converting {file_ext} file to CSV", extra={
+                "request_id": request_id,
+                "filename": file.filename
+            })
+            
+            # Read file content
+            await file.seek(0)
+            content = content.decode('utf-8', errors='ignore')
+            
+            # Save to temporary file for parsing
+            temp_file_path = os.path.join(settings.resources_dir, f"temp_{request_id}{file_ext}")
+            with open(temp_file_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            
+            # Detect format and convert
+            logs = []
+            source_name = os.path.splitext(file.filename)[0]
+            
+            try:
+                # Try JSON format first
+                if file_ext in ['.json', '.jsonl']:
+                    logs = parse_json_logs(temp_file_path)
+                    conversion_info = f"JSON format detected and converted"
+                else:
+                    # Auto-detect between plain, timestamped, and syslog
+                    # Try syslog pattern first
+                    syslog_logs = parse_syslog(temp_file_path, source_name)
+                    if len(syslog_logs) > 0:
+                        logs = syslog_logs
+                        conversion_info = f"Syslog format detected and converted"
+                    else:
+                        # Try timestamped
+                        timestamped_logs = parse_timestamped_logs(temp_file_path, source_name)
+                        if len(timestamped_logs) > 0:
+                            logs = timestamped_logs
+                            conversion_info = f"Timestamped format detected and converted"
+                        else:
+                            # Fallback to plain text
+                            logs = parse_plain_text(temp_file_path, source_name)
+                            conversion_info = f"Plain text format processed"
+                
+                # Clean up temp file
+                if os.path.exists(temp_file_path):
+                    os.remove(temp_file_path)
+                
+                if not logs:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="No valid log entries found in file"
+                    )
+                
+                # Convert logs to DataFrame
+                df = pd.DataFrame(logs)
+                encoding_used = 'utf-8'
+                
+                logger.info(f"Converted {len(logs)} logs from {file_ext}", extra={
+                    "request_id": request_id,
+                    "log_count": len(logs),
+                    "format": conversion_info
+                })
+            
+            except Exception as e:
+                if os.path.exists(temp_file_path):
+                    os.remove(temp_file_path)
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Failed to parse log file: {str(e)}"
+                )
+        
+        # Check if CSV is empty
+        if df.empty or len(df) == 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"CSV must contain columns: {', '.join(required_columns)}. Missing: {', '.join(missing_columns)}"
+                detail="CSV file contains no data rows"
             )
+        
+        # Check if CSV has no columns
+        if len(df.columns) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="CSV file has no columns. Please ensure proper formatting."
+            )
+        
+        # Smart column mapping - automatically detect and map columns
+        df, mapping_info = smart_csv_mapping(df)
+        
+        # After mapping, check if we have valid data
+        if df.empty or len(df) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No valid log entries found after processing. All rows were empty or invalid."
+            )
+        
+        # Log mapping information
+        mapping_summary = format_mapping_summary(mapping_info)
+        logger.info("CSV columns mapped", extra={
+            "request_id": request_id,
+            "original_columns": mapping_info['original_columns'],
+            "auto_assigned": mapping_info['auto_assigned'],
+            "warnings": mapping_info['warnings'],
+            "encoding": encoding_used,
+            "conversion": conversion_info
+        })
+        
+        # Validate log messages are not empty
+        empty_messages = df['log_message'].isna().sum() + (df['log_message'].str.strip() == '').sum()
+        if empty_messages > 0:
+            logger.warning(f"Found {empty_messages} empty log messages", extra={
+                "request_id": request_id,
+                "empty_count": empty_messages
+            })
+            # Remove rows with empty messages
+            df = df[df['log_message'].notna() & (df['log_message'].str.strip() != '')]
+            
+            if df.empty:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="All log messages are empty. CSV must contain valid text data."
+                )
         
         total_logs = len(df)
         logger.info("Processing classification request", extra={
@@ -309,28 +449,84 @@ async def classify_logs(file: UploadFile, request: Request):
         })
         
         # Perform classification
-        df["target_label"] = classify(list(zip(df["source"], df["log_message"])))
+        classification_results = classify(list(zip(df["source"], df["log_message"])))
+        
+        # Add results to DataFrame
+        df["target_label"] = [r["category"] for r in classification_results]
+        df["method"] = [r["method"] for r in classification_results]
+        df["confidence"] = [r["confidence"] for r in classification_results]
+        
+        # Add severity information
+        df["severity"] = df["target_label"].apply(lambda x: get_severity(x).value)
+        df["severity_icon"] = df["target_label"].apply(lambda x: get_severity_icon(get_severity(x)))
         
         # Save results
         os.makedirs(settings.resources_dir, exist_ok=True)
         output_file = settings.output_file
         df.to_csv(output_file, index=False)
         
+        # Get severity stats
+        full_severity_stats = get_severity_stats(df["target_label"].tolist())
+        
+        # Get category distribution
+        category_stats = df["target_label"].value_counts().to_dict()
+        
+        # Format severity stats for frontend (flatten the structure)
+        severity_counts = full_severity_stats.get("severity_counts", {})
+        
         logger.info("Classification complete", extra={
             "request_id": request_id,
             "total_logs": total_logs,
-            "output_file": output_file
+            "output_file": output_file,
+            "critical_count": full_severity_stats.get("critical_count", 0)
         })
         
-        return FileResponse(
-            output_file,
-            media_type='text/csv',
-            filename=f"classified_{file.filename}",
-            headers={"X-Request-ID": request_id}
-        )
+        return JSONResponse(content={
+            "status": "success",
+            "total_logs": total_logs,
+            "output_file": output_file,
+            "severity_stats": severity_counts,  # Flattened for easier frontend access
+            "full_severity_stats": full_severity_stats,  # Complete stats
+            "category_stats": category_stats,
+            "download_url": "/download/",
+            "visualizations_url": "/visualize/",
+            "dashboard_url": "/dashboard",
+            "insights_url": "/insights/",
+            "column_mapping": {
+                "original_columns": mapping_info['original_columns'],
+                "message_from": mapping_info['message_source'],
+                "source_from": mapping_info['source_source'],
+                "warnings": mapping_info['warnings'],
+                "converted_from": conversion_info or "CSV (no conversion needed)"
+            }
+        })
     
     except HTTPException:
         raise
+    except pd.errors.EmptyDataError:
+        logger.error("Empty CSV file", extra={"request_id": request_id})
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="CSV file is empty or contains no data"
+        )
+    except pd.errors.ParserError as e:
+        logger.error("CSV parsing failed", extra={
+            "request_id": request_id,
+            "error": str(e)
+        })
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Malformed CSV file. Please check formatting: {str(e)}"
+        )
+    except UnicodeDecodeError as e:
+        logger.error("Encoding error", extra={
+            "request_id": request_id,
+            "error": str(e)
+        })
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File encoding error. Please save your CSV with UTF-8 encoding."
+        )
     except Exception as e:
         logger.error("Classification failed", extra={
             "request_id": request_id,
@@ -346,25 +542,15 @@ async def classify_logs(file: UploadFile, request: Request):
         await file.close()
 
 
-# ─────────────────────────────────────────────
-# Visualization Endpoints
-# ─────────────────────────────────────────────
-
-@app.get("/plot/", tags=["Visualization"])
-async def generate_plot(request: Request):
+@app.get("/download/", tags=["Results"])
+async def download_results(request: Request):
     """
-    Generate bar plot of log counts by source
+    Download classified results as CSV
     
     - Requires: Previous classification results in output.csv
-    - Returns: PNG image of bar chart
+    - Returns: CSV file with classified logs
     """
     request_id = getattr(request.state, "request_id", "unknown")
-    
-    if not MATPLOTLIB_AVAILABLE:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Matplotlib not installed. Install with: pip install matplotlib"
-        )
     
     try:
         output_file = settings.output_file
@@ -375,51 +561,171 @@ async def generate_plot(request: Request):
                 detail="No classification results found. Please classify a file first."
             )
         
-        df = pd.read_csv(output_file)
-        
-        if "source" not in df.columns:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="'source' column not found in results"
-            )
-        
-        # Count log messages by source
-        source_counts = df['source'].value_counts()
-        
-        # Create bar chart
-        plt.figure(figsize=(10, 6))
-        plt.bar(source_counts.index, source_counts.values, color='mediumseagreen')
-        plt.xlabel("Source System", fontsize=12)
-        plt.ylabel("Log Count", fontsize=12)
-        plt.title("Log Messages per Source System", fontsize=14, fontweight='bold')
-        plt.xticks(rotation=45, ha='right')
-        plt.tight_layout()
-        
-        # Save plot
-        os.makedirs(settings.resources_dir, exist_ok=True)
-        plot_path = settings.plot_file
-        plt.savefig(plot_path, dpi=100, bbox_inches='tight')
-        plt.close()
-        
-        logger.info("Plot generated successfully", extra={
+        logger.info("Serving classification results", extra={
             "request_id": request_id,
-            "plot_path": plot_path
+            "output_file": output_file
         })
         
         return FileResponse(
-            plot_path,
-            media_type="image/png",
+            output_file,
+            media_type='text/csv',
+            filename=f"classified_logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
             headers={"X-Request-ID": request_id}
         )
     
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Plot generation failed", extra={
+        logger.error("Download failed", extra={
             "request_id": request_id,
             "error": str(e)
         })
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Plot generation failed: {str(e)}"
+            detail=f"Download failed: {str(e)}"
         )
+
+
+# ─────────────────────────────────────────────
+# Visualization Endpoints
+# ─────────────────────────────────────────────
+
+@app.get("/visualize/", tags=["Visualization"])
+async def get_visualizations(request: Request):
+    """
+    Get all visualizations as JSON with base64 encoded images
+    
+    - Requires: Previous classification results in output.csv
+    - Returns: JSON with charts, stats, and insights
+    """
+    request_id = getattr(request.state, "request_id", "unknown")
+    
+    try:
+        output_file = settings.output_file
+        
+        if not os.path.exists(output_file):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No classification results found. Please classify a file first."
+            )
+        
+        # Read results
+        df = pd.read_csv(output_file)
+        
+        # Validate required columns
+        required_cols = ["target_label", "method", "confidence"]
+        if not all(col in df.columns for col in required_cols):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Results file missing required columns: {required_cols}"
+            )
+        
+        # Generate visualizations
+        visualizer = LogVisualizer(df)
+        visualizations = visualizer.generate_all_visualizations()
+        
+        logger.info("Visualizations generated", extra={
+            "request_id": request_id,
+            "total_logs": len(df)
+        })
+        
+        return JSONResponse(content=visualizations)
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Visualization generation failed", extra={
+            "request_id": request_id,
+            "error": str(e)
+        })
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Visualization failed: {str(e)}"
+        )
+
+
+@app.get("/insights/", tags=["Visualization"])
+async def get_insights(request: Request):
+    """
+    Get text-based insights report
+    
+    - Requires: Previous classification results in output.csv
+    - Returns: Plain text insights report
+    """
+    request_id = getattr(request.state, "request_id", "unknown")
+    
+    try:
+        output_file = settings.output_file
+        
+        if not os.path.exists(output_file):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No classification results found. Please classify a file first."
+            )
+        
+        # Read results
+        df = pd.read_csv(output_file)
+        
+        # Generate insights report
+        report = create_insights_report(df)
+        
+        logger.info("Insights report generated", extra={
+            "request_id": request_id
+        })
+        
+        return JSONResponse(content={"report": report})
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Insights generation failed", extra={
+            "request_id": request_id,
+            "error": str(e)
+        })
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Insights generation failed: {str(e)}"
+        )
+
+
+@app.get("/dashboard", response_class=HTMLResponse, tags=["Visualization"])
+async def dashboard(request: Request):
+    """
+    Interactive web dashboard with visualizations
+    
+    - Simple frontend dashboard
+    - Upload and classify logs through UI
+    - View results and analytics
+    """
+    request_id = getattr(request.state, "request_id", "unknown")
+    
+    try:
+        # Simple dashboard - just return the template
+        logger.info("Dashboard accessed", extra={"request_id": request_id})
+        
+        return templates.TemplateResponse(
+            "dashboard.html",
+            {
+                "request": request
+            }
+        )
+    
+    except Exception as e:
+        logger.error("Dashboard error", extra={
+            "request_id": request_id,
+            "error": str(e)
+        })
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Dashboard error: {str(e)}"
+        )
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "server:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=False
+    )
