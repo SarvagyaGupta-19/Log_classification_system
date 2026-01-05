@@ -1,426 +1,380 @@
-/*
-==============================================
-Frontend JavaScript for Log Classification Dashboard
-Frontend Engineer: Real-time updates, charts, interactions
+// LogClassifier Pro - Professional UI/UX JavaScript
+// Production-Ready with Full State Management
 
-Features:
-- Real-time job monitoring via WebSocket
-- Chart.js visualizations
-- File upload with drag & drop
-- Dynamic table updates
-- Navigation management
-==============================================
-*/
+const API = window.location.origin;
+let currentFile = null;
+let classificationResult = null;
 
-// API Base URL
-const API_BASE = window.location.origin;
-
-// Current user data
-let currentUser = null;
-let authToken = null;
-
-// Initialize dashboard on load
-document.addEventListener('DOMContentLoaded', async () => {
-    await initializeDashboard();
-    setupEventListeners();
-    setupCharts();
-    loadDashboardData();
+// Initialize on DOM load
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Log Classification System');
+    initializeApp();
+    loadMetrics();
 });
 
-// Initialize dashboard
-async function initializeDashboard() {
-    // Check if user is authenticated
-    authToken = localStorage.getItem('auth_token');
+function initializeApp() {
+    const fileInput = document.getElementById('fileInput');
+    const uploadArea = document.getElementById('uploadArea');
+    const browseBtn = document.getElementById('browseBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const classifyBtn = document.getElementById('classifyBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const newUploadBtn = document.getElementById('newUploadBtn');
+
+    // File input handlers
+    fileInput.addEventListener('change', handleFileSelect);
     
-    if (!authToken) {
-        window.location.href = '/login';
+    // Browse button handler
+    browseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fileInput.value = ''; // Reset input to allow re-selecting same file
+        fileInput.click();
+    });
+    
+    // Drag and drop handlers
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = 'var(--primary)';
+    });
+    
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.style.borderColor = 'var(--border)';
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = 'var(--border)';
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileSelect({ target: { files } });
+        }
+    });
+
+    // Action button handlers
+    cancelBtn.addEventListener('click', resetToUpload);
+    classifyBtn.addEventListener('click', startClassification);
+    downloadBtn.addEventListener('click', downloadResults);
+    newUploadBtn.addEventListener('click', resetToUpload);
+}
+
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    
+    if (!file) return;
+    
+    // Validate file type - accept CSV and raw log files
+    const allowedExtensions = ['.csv', '.log', '.txt', '.json', '.jsonl'];
+    const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    
+    if (!allowedExtensions.includes(fileExt)) {
+        showToast('Please upload a CSV, LOG, TXT, or JSON file', 'error');
         return;
     }
     
-    try {
-        // Fetch current user
-        const response = await fetch(`${API_BASE}/auth/me`, {
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            }
-        });
-        
-        if (response.ok) {
-            currentUser = await response.json();
-            document.getElementById('username').textContent = currentUser.full_name || currentUser.username;
-            document.getElementById('user-role').textContent = currentUser.role;
-        } else {
-            logout();
-        }
-    } catch (error) {
-        console.error('Failed to initialize:', error);
-    }
-}
-
-// Setup event listeners
-function setupEventListeners() {
-    // Navigation
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            const target = item.getAttribute('href').substring(1);
-            navigateTo(target);
-        });
-    });
-    
-    // File upload
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
-    
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.style.borderColor = 'var(--primary)';
-    });
-    
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.style.borderColor = 'var(--border)';
-    });
-    
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.style.borderColor = 'var(--border)';
-        const file = e.dataTransfer.files[0];
-        if (file && file.name.endsWith('.csv')) {
-            handleFileSelect(file);
-        }
-    });
-    
-    fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            handleFileSelect(file);
-        }
-    });
-}
-
-// Navigation
-function navigateTo(section) {
-    // Update active nav item
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-        if (item.getAttribute('href') === `#${section}`) {
-            item.classList.add('active');
-        }
-    });
-    
-    // Update content sections
-    document.querySelectorAll('.content-section').forEach(sec => {
-        sec.classList.remove('active');
-    });
-    
-    const targetSection = document.getElementById(`${section}-view`);
-    if (targetSection) {
-        targetSection.classList.add('active');
+    // Validate file size (max 50MB)
+    if (file.size > 50 * 1024 * 1024) {
+        showToast('File too large. Maximum size is 50MB', 'error');
+        return;
     }
     
-    // Update page title
-    const titles = {
-        'dashboard': 'Dashboard Overview',
-        'classify': 'Classify Logs',
-        'jobs': 'Jobs History',
-        'analytics': 'Analytics',
-        'settings': 'Settings'
-    };
-    
-    document.getElementById('page-title').textContent = titles[section] || 'Dashboard';
+    currentFile = file;
+    showFileSelected();
 }
 
-// Setup Charts
-let methodsChart, categoriesChart;
-
-function setupCharts() {
-    // Methods Chart
-    const methodsCtx = document.getElementById('methodsChart').getContext('2d');
-    methodsChart = new Chart(methodsCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Regex', 'BERT', 'LLM'],
-            datasets: [{
-                data: [45, 40, 15],
-                backgroundColor: [
-                    '#6366f1',
-                    '#10b981',
-                    '#f59e0b'
-                ],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        color: '#cbd5e1',
-                        padding: 20,
-                        font: {
-                            size: 12
-                        }
-                    }
-                }
-            }
-        }
-    });
+function showFileSelected() {
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
     
-    // Categories Chart
-    const categoriesCtx = document.getElementById('categoriesChart').getContext('2d');
-    categoriesChart = new Chart(categoriesCtx, {
-        type: 'bar',
-        data: {
-            labels: ['User Actions', 'System Notifications', 'File Operations', 'Errors', 'Other'],
-            datasets: [{
-                label: 'Log Count',
-                data: [1200, 850, 640, 320, 180],
-                backgroundColor: '#6366f1',
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: '#334155'
-                    },
-                    ticks: {
-                        color: '#cbd5e1'
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    },
-                    ticks: {
-                        color: '#cbd5e1'
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                }
-            }
-        }
-    });
+    fileName.textContent = currentFile.name;
+    fileSize.textContent = formatFileSize(currentFile.size);
+    
+    // Update UI state
+    document.getElementById('uploadArea').style.display = 'none';
+    document.getElementById('fileSelected').style.display = 'block';
 }
 
-// Load dashboard data
-async function loadDashboardData() {
-    try {
-        // Fetch metrics
-        const metricsResponse = await fetch(`${API_BASE}/metrics`, {
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            }
-        });
-        
-        if (metricsResponse.ok) {
-            const metrics = await metricsResponse.json();
-            updateDashboardStats(metrics);
-        }
-        
-        // Fetch recent jobs
-        const jobsResponse = await fetch(`${API_BASE}/jobs?limit=5`, {
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            }
-        });
-        
-        if (jobsResponse.ok) {
-            const jobs = await jobsResponse.json();
-            updateRecentJobsTable(jobs);
-        }
-    } catch (error) {
-        console.error('Failed to load dashboard data:', error);
-    }
-}
-
-// Update dashboard stats
-function updateDashboardStats(metrics) {
-    document.getElementById('total-logs').textContent = metrics.total_classifications.toLocaleString();
-    document.getElementById('avg-time').textContent = `${Math.round(metrics.average_processing_time_ms)}ms`;
-    document.getElementById('active-jobs').textContent = metrics.active_jobs || 0;
+async function startClassification() {
+    if (!currentFile) return;
     
-    // Update charts
-    if (metrics.classifications_by_method) {
-        methodsChart.data.datasets[0].data = [
-            metrics.classifications_by_method.regex || 0,
-            metrics.classifications_by_method.bert || 0,
-            metrics.classifications_by_method.llm || 0
-        ];
-        methodsChart.update();
-    }
-}
-
-// Update recent jobs table
-function updateRecentJobsTable(jobs) {
-    const tbody = document.getElementById('recent-jobs-table');
-    tbody.innerHTML = '';
-    
-    jobs.forEach(job => {
-        const row = document.createElement('tr');
-        
-        const statusClass = {
-            'completed': 'success',
-            'processing': 'warning',
-            'failed': 'danger',
-            'pending': 'info'
-        }[job.status] || 'info';
-        
-        row.innerHTML = `
-            <td><code>${job.job_id.substring(0, 8)}...</code></td>
-            <td>${job.filename || 'N/A'}</td>
-            <td>${job.total_logs}</td>
-            <td><span class="badge badge-${statusClass}">${job.status}</span></td>
-            <td>${job.processing_time || 'N/A'}</td>
-            <td>
-                <button class="btn-icon" onclick="viewJob('${job.job_id}')">
-                    <i class="fas fa-eye"></i>
-                </button>
-                <button class="btn-icon" onclick="downloadResults('${job.job_id}')">
-                    <i class="fas fa-download"></i>
-                </button>
-            </td>
-        `;
-        
-        tbody.appendChild(row);
-    });
-}
-
-// File handling
-function handleFileSelect(file) {
-    document.getElementById('dropZone').style.display = 'none';
-    document.getElementById('fileInfo').style.display = 'flex';
-    
-    document.getElementById('fileName').textContent = file.name;
-    document.getElementById('fileSize').textContent = formatBytes(file.size);
-    
-    window.selectedFile = file;
-}
-
-async function uploadFile() {
-    if (!window.selectedFile) return;
+    // Show processing state
+    document.getElementById('fileSelected').style.display = 'none';
+    document.getElementById('processing').style.display = 'block';
     
     const formData = new FormData();
-    formData.append('file', window.selectedFile);
+    formData.append('file', currentFile);
     
-    document.getElementById('fileInfo').style.display = 'none';
-    document.getElementById('processingStatus').style.display = 'block';
+    // Start progress animation
+    animateProgress();
     
     try {
-        const response = await fetch(`${API_BASE}/classify/`, {
+        const response = await fetch(`${API}/classify/`, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            },
             body: formData
         });
         
-        if (response.ok) {
-            const result = await response.json();
-            
-            // Poll for job status
-            if (result.job_id) {
-                pollJobStatus(result.job_id);
-            } else {
-                // Immediate result
-                showSuccessMessage('Classification completed!');
-                resetUploadForm();
-            }
-        } else {
-            showErrorMessage('Upload failed. Please try again.');
-            resetUploadForm();
+        if (!response.ok) {
+            throw new Error('Classification failed');
         }
+        
+        classificationResult = await response.json();
+        
+        // Complete progress
+        completeProgress();
+        
+        // Show success state after animation
+        setTimeout(() => {
+            showSuccessState();
+            showAnalytics();
+            loadMetrics();
+        }, 1000);
+        
     } catch (error) {
-        console.error('Upload error:', error);
-        showErrorMessage('Upload failed. Please try again.');
-        resetUploadForm();
+        console.error('Classification error:', error);
+        showToast('Classification failed. Please try again.', 'error');
+        resetToUpload();
     }
 }
 
-// Poll job status
-async function pollJobStatus(jobId) {
-    const interval = setInterval(async () => {
-        try {
-            const response = await fetch(`${API_BASE}/jobs/${jobId}/status`, {
-                headers: {
-                    'Authorization': `Bearer ${authToken}`
-                }
-            });
+function animateProgress() {
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    let progress = 0;
+    
+    // Animate to 90%
+    const interval = setInterval(() => {
+        progress += 2;
+        if (progress <= 90) {
+            progressBar.style.width = progress + '%';
             
-            if (response.ok) {
-                const status = await response.json();
-                
-                // Update progress
-                const progress = (status.processed / status.total) * 100;
-                document.getElementById('progressFill').style.width = `${progress}%`;
-                document.getElementById('progressText').textContent = `Processing: ${Math.round(progress)}%`;
-                
-                if (status.status === 'completed') {
-                    clearInterval(interval);
-                    showSuccessMessage('Classification completed!');
-                    resetUploadForm();
-                    loadDashboardData();
-                } else if (status.status === 'failed') {
-                    clearInterval(interval);
-                    showErrorMessage('Classification failed.');
-                    resetUploadForm();
-                }
+            if (progress < 30) {
+                progressText.textContent = 'Initializing classification engine...';
+            } else if (progress < 60) {
+                progressText.textContent = 'Processing log entries...';
+            } else {
+                progressText.textContent = 'Analyzing severity levels...';
             }
-        } catch (error) {
-            console.error('Polling error:', error);
+        } else {
+            clearInterval(interval);
         }
-    }, 2000);
+    }, 100);
+    
+    // Store interval for cleanup if needed
+    window.progressInterval = interval;
 }
 
-// Utility functions
-function formatBytes(bytes) {
+function completeProgress() {
+    if (window.progressInterval) {
+        clearInterval(window.progressInterval);
+    }
+    
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    
+    // Animate to 100%
+    progressBar.style.width = '95%';
+    progressText.textContent = 'Finalizing results...';
+    
+    setTimeout(() => {
+        progressBar.style.width = '100%';
+        progressText.textContent = 'Classification complete!';
+    }, 300);
+}
+
+function showSuccessState() {
+    document.getElementById('processing').style.display = 'none';
+    document.getElementById('successState').style.display = 'block';
+    
+    // Update success message
+    const message = document.getElementById('successMessage');
+    if (classificationResult) {
+        const total = classificationResult.total_logs || 0;
+        const stats = classificationResult.severity_stats || {};
+        const high = (stats.CRITICAL || 0) + (stats.HIGH || 0);
+        message.textContent = `Successfully processed ${total.toLocaleString()} log entries. ${high} high-priority issues identified.`;
+        
+        // Show column mapping info if available
+        if (classificationResult.column_mapping) {
+            showColumnMappingInfo(classificationResult.column_mapping);
+        }
+    }
+    
+    showToast('Classification completed successfully', 'success');
+}
+
+function showColumnMappingInfo(mappingInfo) {
+    // Display column mapping information to user
+    let message = '';
+    
+    if (mappingInfo.warnings && mappingInfo.warnings.length > 0) {
+        message += 'Note: ';
+        message += mappingInfo.warnings.join(', ');
+        console.log('Column mapping:', mappingInfo);
+        
+        // Show info toast if columns were auto-detected
+        if (mappingInfo.warnings.some(w => w.includes('Auto-detected') || w.includes('no source'))) {
+            showToast('CSV columns automatically mapped', 'success');
+        }
+    }
+}
+
+function showAnalytics() {
+    if (!classificationResult) {
+        console.warn('No classification result available');
+        return;
+    }
+    
+    console.log('Classification result:', classificationResult);
+    
+    const stats = classificationResult.severity_stats || {};
+    const categoryStats = classificationResult.category_stats || {};
+    
+    // Update severity counts (handle both formats)
+    document.getElementById('criticalCount').textContent = stats.CRITICAL || 0;
+    document.getElementById('highCount').textContent = stats.HIGH || 0;
+    document.getElementById('mediumCount').textContent = stats.MEDIUM || 0;
+    document.getElementById('lowCount').textContent = stats.LOW || 0;
+    document.getElementById('infoCount').textContent = stats.INFO || 0;
+    document.getElementById('unclassifiedCount').textContent = stats.UNCLASSIFIED || 0;
+    
+    console.log('Updated severity counts:', stats);
+    
+    // Update category breakdown
+    updateCategoryBreakdown(categoryStats);
+    
+    // Show analytics section with smooth animation
+    const analyticsSection = document.getElementById('analyticsSection');
+    analyticsSection.style.display = 'block';
+    
+    // Smooth scroll to analytics
+    setTimeout(() => {
+        analyticsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 500);
+}
+
+function updateCategoryBreakdown(categoryStats) {
+    const categoryList = document.getElementById('categoryList');
+    
+    if (!categoryStats || Object.keys(categoryStats).length === 0) {
+        categoryList.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">No category data available</p>';
+        return;
+    }
+    
+    // Sort categories by count
+    const sortedCategories = Object.entries(categoryStats)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 10); // Top 10 categories
+    
+    categoryList.innerHTML = sortedCategories.map(([category, count]) => `
+        <div class="category-item">
+            <span class="category-name">${category}</span>
+            <span class="category-count">${count}</span>
+        </div>
+    `).join('');
+}
+
+async function downloadResults() {
+    try {
+        showToast('Preparing download...', 'info');
+        
+        const response = await fetch(`${API}/download/`);
+        
+        if (!response.ok) {
+            throw new Error('Download failed');
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        link.href = url;
+        link.download = `classified_logs_${timestamp}.csv`;
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Cleanup
+        window.URL.revokeObjectURL(url);
+        
+        showToast('Download started successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Download error:', error);
+        showToast('Download failed. Please try again.', 'error');
+    }
+}
+
+function resetToUpload() {
+    currentFile = null;
+    classificationResult = null;
+    
+    // Reset file input
+    document.getElementById('fileInput').value = '';
+    
+    // Reset progress
+    document.getElementById('progressBar').style.width = '0%';
+    document.getElementById('progressText').textContent = 'Initializing BERT model...';
+    
+    // Hide all states except upload
+    document.getElementById('uploadArea').style.display = 'block';
+    document.getElementById('fileSelected').style.display = 'none';
+    document.getElementById('processing').style.display = 'none';
+    document.getElementById('successState').style.display = 'none';
+    
+    // Keep analytics visible if they exist
+    // User might want to compare with previous results
+}
+
+async function loadMetrics() {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        const response = await fetch(`${API}/metrics`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.total_classifications !== undefined) {
+                document.getElementById('totalLogs').textContent = 
+                    data.total_classifications.toLocaleString();
+            }
+        }
+    } catch (error) {
+        if (error.name !== 'AbortError') {
+            console.log('Metrics loading failed:', error.message);
+        }
+    }
+}
+
+function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
+    
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
 }
 
-function resetUploadForm() {
-    document.getElementById('dropZone').style.display = 'block';
-    document.getElementById('fileInfo').style.display = 'none';
-    document.getElementById('processingStatus').style.display = 'none';
-    document.getElementById('progressFill').style.width = '0%';
-    window.selectedFile = null;
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = `toast ${type} show`;
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3500);
 }
 
-function showSuccessMessage(message) {
-    // Implement toast notification
-    alert(message);
-}
-
-function showErrorMessage(message) {
-    // Implement toast notification
-    alert(message);
-}
-
-function viewJob(jobId) {
-    // Navigate to job details
-    console.log('View job:', jobId);
-}
-
-function downloadResults(jobId) {
-    window.location.href = `${API_BASE}/jobs/${jobId}/download`;
-}
-
-function logout() {
-    localStorage.removeItem('auth_token');
-    window.location.href = '/login';
-}
-
-// Auto-refresh dashboard every 30 seconds
-setInterval(loadDashboardData, 30000);
+// Make functions globally accessible
+window.resetToUpload = resetToUpload;
+window.downloadResults = downloadResults;

@@ -2,249 +2,223 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Log Classification Dashboard - Enterprise ML Platform</title>
-    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Log Classification System - Enterprise Log Management</title>
+    <meta name="description" content="Enterprise-grade log classification and analysis platform for modern IT operations">
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23f59e0b' width='100' height='100' rx='12'/><rect fill='%2310b981' x='20' y='30' width='15' height='40' rx='3'/><rect fill='%23a78bfa' x='40' y='20' width='15' height='50' rx='3'/><rect fill='%23f43f5e' x='60' y='35' width='15' height='35' rx='3'/><rect fill='%2360a5fa' x='10' y='75' width='80' height='15' rx='5'/><text x='50' y='87' text-anchor='middle' font-size='10' font-weight='bold' fill='white'>LOG</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
 </head>
 <body>
-    <!-- Sidebar Navigation -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
+    <!-- Header -->
+    <header class="top-header">
+        <div class="header-container">
             <div class="logo">
-                <i class="fas fa-layer-group"></i>
-                <span>LogClassifier</span>
+                <i class="fas fa-chart-bar"></i>
+                <div class="logo-text">
+                    <h1>Log Classification System</h1>
+                </div>
             </div>
-            <div class="user-badge">
-                <span id="user-role" class="role-badge">Admin</span>
+            <div class="header-stats">
+                <div class="stat-pill">
+                    <i class="fas fa-check-circle"></i>
+                    <span id="totalLogs">0</span> Logs Processed
+                </div>
+                <div class="stat-pill status">
+                    <i class="fas fa-circle"></i>
+                    System Online
+                </div>
             </div>
         </div>
-        
-        <nav class="sidebar-nav">
-            <a href="#dashboard" class="nav-item active">
-                <i class="fas fa-chart-line"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="#classify" class="nav-item">
-                <i class="fas fa-upload"></i>
-                <span>Classify Logs</span>
-            </a>
-            <a href="#jobs" class="nav-item">
-                <i class="fas fa-tasks"></i>
-                <span>Jobs History</span>
-            </a>
-            <a href="#analytics" class="nav-item">
-                <i class="fas fa-chart-pie"></i>
-                <span>Analytics</span>
-            </a>
-            <a href="#settings" class="nav-item">
-                <i class="fas fa-cog"></i>
-                <span>Settings</span>
-            </a>
-        </nav>
-        
-        <div class="sidebar-footer">
-            <button class="btn-logout" onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Logout</span>
-            </button>
-        </div>
-    </aside>
+    </header>
 
     <!-- Main Content -->
-    <main class="main-content">
-        <!-- Header -->
-        <header class="header">
-            <div class="header-left">
-                <h1 id="page-title">Dashboard Overview</h1>
-                <p class="subtitle">Real-time log classification monitoring</p>
+    <main class="container">
+        <!-- Upload Section -->
+        <section class="upload-card" id="uploadSection">
+            <div class="card-header">
+                <h2><i class="fas fa-upload"></i> Upload & Classify Logs</h2>
+                <p>Advanced log classification and severity analysis for enterprise operations</p>
             </div>
-            <div class="header-right">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search jobs, logs...">
-                </div>
-                <button class="btn-notification">
-                    <i class="fas fa-bell"></i>
-                    <span class="notification-badge">3</span>
-                </button>
-                <div class="user-profile">
-                    <img src="/static/images/avatar.svg" alt="User" class="avatar">
-                    <span id="username">Admin User</span>
-                </div>
-            </div>
-        </header>
 
-        <!-- Dashboard View -->
-        <section id="dashboard-view" class="content-section active">
-            <!-- Stats Cards -->
-            <div class="stats-grid">
-                <div class="stat-card primary">
-                    <div class="stat-icon">
-                        <i class="fas fa-file-alt"></i>
+            <!-- Upload Area -->
+            <div id="uploadArea" class="upload-zone">
+                <input type="file" id="fileInput" accept=".csv,.log,.txt,.json,.jsonl" hidden>
+                <div class="upload-content">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
                     </div>
-                    <div class="stat-content">
-                        <h3 id="total-logs">0</h3>
-                        <p>Total Logs Classified</p>
-                        <span class="stat-change positive">
-                            <i class="fas fa-arrow-up"></i> 12.5%
-                        </span>
-                    </div>
+                    <h3>Drag & Drop Log File</h3>
+                    <p>CSV, LOG, TXT, JSON formats supported</p>
+                    <button class="btn-primary" type="button" id="browseBtn">
+                        <i class="fas fa-folder-open"></i>
+                        Browse Files
+                    </button>
                 </div>
-
-                <div class="stat-card success">
-                    <div class="stat-icon">
-                        <i class="fas fa-check-circle"></i>
+                <div class="format-help">
+                    <div class="help-header">
+                        <i class="fas fa-info-circle"></i>
+                        Supported File Formats
                     </div>
-                    <div class="stat-content">
-                        <h3 id="accuracy">98.2%</h3>
-                        <p>Classification Accuracy</p>
-                        <span class="stat-change positive">
-                            <i class="fas fa-arrow-up"></i> 2.1%
-                        </span>
-                    </div>
-                </div>
-
-                <div class="stat-card warning">
-                    <div class="stat-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3 id="avg-time">45ms</h3>
-                        <p>Avg. Processing Time</p>
-                        <span class="stat-change negative">
-                            <i class="fas fa-arrow-down"></i> 5ms
-                        </span>
-                    </div>
-                </div>
-
-                <div class="stat-card info">
-                    <div class="stat-icon">
-                        <i class="fas fa-server"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3 id="active-jobs">5</h3>
-                        <p>Active Jobs</p>
-                        <span class="stat-label">Processing</span>
+                    <div class="help-content">
+                        <code>
+<span class="code-header">✓ CSV:</span> Any column names (auto-detected)
+<span class="code-header">✓ LOG/TXT:</span> Plain text or timestamped logs
+<span class="code-header">✓ JSON:</span> One JSON object per line
+<span class="code-header">✓ Auto-conversion:</span> All formats → classified
+                        </code>
                     </div>
                 </div>
             </div>
 
-            <!-- Charts Section -->
-            <div class="charts-grid">
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3>Classification Methods</h3>
-                        <select class="chart-filter">
-                            <option>Last 24 hours</option>
-                            <option>Last 7 days</option>
-                            <option>Last 30 days</option>
-                        </select>
+            <!-- File Selected State -->
+            <div id="fileSelected" class="file-selected" style="display:none;">
+                <div class="file-info">
+                    <div class="file-icon-large">
+                        <i class="fas fa-file-csv"></i>
                     </div>
-                    <canvas id="methodsChart"></canvas>
+                    <div class="file-details">
+                        <h3 id="fileName"></h3>
+                        <p id="fileSize"></p>
+                    </div>
                 </div>
-
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3>Log Categories Distribution</h3>
-                        <button class="btn-export"><i class="fas fa-download"></i></button>
-                    </div>
-                    <canvas id="categoriesChart"></canvas>
+                <div class="file-actions">
+                    <button class="btn-secondary" id="cancelBtn">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button class="btn-success" id="classifyBtn">
+                        <i class="fas fa-rocket"></i> Start Classification
+                    </button>
                 </div>
             </div>
 
-            <!-- Recent Activity -->
-            <div class="activity-section">
-                <div class="section-header">
-                    <h3>Recent Classification Jobs</h3>
-                    <a href="#jobs" class="link-view-all">View All <i class="fas fa-arrow-right"></i></a>
+            <!-- Processing State -->
+            <div id="processing" class="processing" style="display:none;">
+                <div class="processing-animation">
+                    <div class="spinner"></div>
+                    <i class="fas fa-cog processing-icon"></i>
                 </div>
-                <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Job ID</th>
-                                <th>File Name</th>
-                                <th>Logs Count</th>
-                                <th>Status</th>
-                                <th>Processing Time</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recent-jobs-table">
-                            <!-- Populated by JavaScript -->
-                        </tbody>
-                    </table>
+                <h3 id="progressText">Initializing classification engine...</h3>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <p class="processing-info">
+                    <i class="fas fa-shield-alt"></i> Processing with enterprise-grade security
+                </p>
+            </div>
+
+            <!-- Success State -->
+            <div id="successState" class="success-state" style="display:none;">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3>Classification Completed</h3>
+                <p id="successMessage">Successfully processed log entries</p>
+                <div class="success-actions">
+                    <button class="btn-download" id="downloadBtn">
+                        <i class="fas fa-download"></i> Download Results
+                    </button>
+                    <button class="btn-secondary" id="newUploadBtn">
+                        <i class="fas fa-plus"></i> Classify Another File
+                    </button>
                 </div>
             </div>
         </section>
 
-        <!-- Classify View -->
-        <section id="classify-view" class="content-section">
-            <div class="upload-container">
-                <div class="upload-area" id="dropZone">
-                    <div class="upload-icon">
-                        <i class="fas fa-cloud-upload-alt"></i>
+        <!-- Analytics Section (Hidden until classification) -->
+        <section class="analytics-section" id="analyticsSection" style="display:none;">
+            <div class="section-header">
+                <h2><i class="fas fa-chart-pie"></i> Classification Results</h2>
+                <p>Comprehensive severity analysis and log distribution metrics</p>
+            </div>
+
+            <!-- Severity Grid -->
+            <div class="severity-grid">
+                <div class="severity-card critical">
+                    <div class="severity-icon">
+                        <i class="fas fa-skull-crossbones"></i>
                     </div>
-                    <h3>Drag & Drop CSV File</h3>
-                    <p>or click to browse</p>
-                    <input type="file" id="fileInput" accept=".csv" hidden>
-                    <button class="btn-primary" onclick="document.getElementById('fileInput').click()">
-                        Select File
-                    </button>
+                    <div class="severity-data">
+                        <div class="severity-count" id="criticalCount">0</div>
+                        <div class="severity-label">Critical</div>
+                    </div>
+                    <div class="severity-desc">System failures</div>
                 </div>
 
-                <div class="file-info" id="fileInfo" style="display:none;">
-                    <div class="file-details">
-                        <i class="fas fa-file-csv"></i>
-                        <div>
-                            <h4 id="fileName"></h4>
-                            <p id="fileSize"></p>
-                        </div>
+                <div class="severity-card high">
+                    <div class="severity-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
                     </div>
-                    <button class="btn-primary" onclick="uploadFile()">
-                        <i class="fas fa-rocket"></i> Start Classification
-                    </button>
+                    <div class="severity-data">
+                        <div class="severity-count" id="highCount">0</div>
+                        <div class="severity-label">High</div>
+                    </div>
+                    <div class="severity-desc">Immediate attention</div>
                 </div>
 
-                <div class="processing-status" id="processingStatus" style="display:none;">
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill"></div>
+                <div class="severity-card medium">
+                    <div class="severity-icon">
+                        <i class="fas fa-info-circle"></i>
                     </div>
-                    <p id="progressText">Processing: 0%</p>
+                    <div class="severity-data">
+                        <div class="severity-count" id="mediumCount">0</div>
+                        <div class="severity-label">Medium</div>
+                    </div>
+                    <div class="severity-desc">Monitor activity</div>
+                </div>
+
+                <div class="severity-card low">
+                    <div class="severity-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="severity-data">
+                        <div class="severity-count" id="lowCount">0</div>
+                        <div class="severity-label">Low</div>
+                    </div>
+                    <div class="severity-desc">Standard operations</div>
+                </div>
+
+                <div class="severity-card info">
+                    <div class="severity-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <div class="severity-data">
+                        <div class="severity-count" id="infoCount">0</div>
+                        <div class="severity-label">Info</div>
+                    </div>
+                    <div class="severity-desc">Informational</div>
+                </div>
+
+                <div class="severity-card unclassified">
+                    <div class="severity-icon">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                    <div class="severity-data">
+                        <div class="severity-count" id="unclassifiedCount">0</div>
+                        <div class="severity-label">Unclassified</div>
+                    </div>
+                    <div class="severity-desc">Needs review</div>
                 </div>
             </div>
 
-            <div class="classification-options">
-                <h3>Classification Settings</h3>
-                <div class="options-grid">
-                    <div class="option-item">
-                        <label>
-                            <input type="checkbox" checked>
-                            <span>Use BERT Classifier</span>
-                        </label>
-                    </div>
-                    <div class="option-item">
-                        <label>
-                            <input type="checkbox" checked>
-                            <span>Enable LLM Fallback</span>
-                        </label>
-                    </div>
-                    <div class="option-item">
-                        <label>
-                            <span>Confidence Threshold</span>
-                            <input type="range" min="0" max="1" step="0.1" value="0.5">
-                            <span class="value">0.5</span>
-                        </label>
-                    </div>
-                </div>
+            <!-- Category Breakdown -->
+            <div class="category-breakdown">
+                <h3><i class="fas fa-layer-group"></i> Category Distribution</h3>
+                <div class="category-list" id="categoryList"></div>
             </div>
         </section>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Toast Notifications -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 Log Classification System. All rights reserved.</p>
+    </footer>
+
     <script src="/static/js/dashboard.js"></script>
 </body>
 </html>
