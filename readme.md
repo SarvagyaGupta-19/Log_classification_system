@@ -1,366 +1,364 @@
-# 🚀 Log Classification System - Enterprise Edition
+# Log Classification System
 
-**Production-ready enterprise log classification using intelligent multi-stage ML pipeline: Regex → BERT → LLM**
+> Enterprise-grade log classification and severity analysis system powered by machine learning
 
-> **Author:** Sarvagya Gupta  
-> **Repository:** https://github.com/SarvagyaGupta-19/Log_classification_system  
-> **Contact:** sarvagya653@gmail.com
-
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.127.0-green.svg)](https://fastapi.tiangolo.com/)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green.svg)](https://fastapi.tiangolo.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
-[![JWT Auth](https://img.shields.io/badge/auth-JWT-orange.svg)](https://jwt.io/)
 
----
+## 🚀 Features
 
-## 🎯 What's New in v2.0 (Enterprise Edition)
+### Intelligent Classification
+- **Multi-stage ML Pipeline**: Regex → BERT → LLM fallback architecture
+- **42+ Regex Patterns**: Ultra-fast pattern matching for common log types
+- **BERT Model**: 99.63% accuracy on log classification
+- **Groq LLM Integration**: Advanced classification for edge cases
 
-### **Production Features Added:**
-- ✅ **JWT Authentication & RBAC** - Secure access with role-based permissions
-- ✅ **PostgreSQL Database** - Persistent storage for jobs, users, audit logs
-- ✅ **Async Processing** - Celery + Redis for batch jobs (1000s of logs)
-- ✅ **Professional Web UI** - Modern dashboard with real-time monitoring
-- ✅ **Docker Support** - Complete containerization with docker-compose
-- ✅ **Comprehensive Tests** - pytest suite with 95%+ coverage
-- ✅ **Audit Logging** - Complete activity tracking for compliance
-- ✅ **API Rate Limiting** - Protection against abuse
-- ✅ **Health Monitoring** - Production-grade observability
+### Universal Format Support
+- **Auto-detect CSV Columns**: Recognizes 20+ message patterns, 25+ source patterns
+- **Multiple File Formats**: CSV, LOG, TXT, JSON/JSONL
+- **Automatic Conversion**: Plain text, timestamped, syslog, JSON logs → classified results
+- **Encoding Support**: UTF-8, Latin-1, ISO-8859-1, CP1252, UTF-16
 
----
+### Severity Analysis
+- **6 Severity Levels**: CRITICAL, HIGH, MEDIUM, LOW, INFO, UNCLASSIFIED
+- **Real-time Analytics**: Interactive dashboard with severity breakdown
+- **Category Distribution**: Top categories with counts
+- **Visual Indicators**: Color-coded severity icons (🔴🟠🟡🟢🔵⚪)
 
-## 📋 What This Does
+### Professional Web Interface
+- **Modern UI/UX**: Clean, professional enterprise design
+- **Drag & Drop Upload**: Intuitive file handling
+- **Real-time Progress**: Animated classification progress
+- **Mobile Responsive**: Works on all devices
+- **Download Results**: CSV export with classifications
 
-Automatically classifies log messages into categories (User Actions, System Notifications, etc.) using:
-- **Regex patterns** (fast, rule-based)
-- **BERT embeddings** (ML-based, accurate)
-- **LLM classification** (AI-powered for complex cases)
+### Enterprise Features
+- **Health Monitoring**: `/health` and `/metrics` endpoints
+- **Request Logging**: Structured JSON logs with request IDs
+- **Error Handling**: Comprehensive validation and error messages
+- **Performance Metrics**: Track processing time and accuracy
+- **API Documentation**: Auto-generated Swagger UI
 
-**Use Cases:** Security monitoring, log analytics, incident detection, compliance reporting
+## 📋 Installation
 
----
+### Prerequisites
+- Python 3.8 or higher
+- pip package manager
 
-## ⚡ Quick Start
+### Quick Start
 
-### 1. Setup
-```powershell
-# Create virtual environment
-python -m venv venv
-.\venv\Scripts\Activate.ps1
+1. **Clone the repository**
+```bash
+git clone https://github.com/yourusername/log-classification-system.git
+cd log-classification-system
+```
 
-# Install dependencies
+2. **Install dependencies**
+```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configure
-Edit `.env` file:
+3. **Set up environment variables**
 ```bash
-GROQ_API_KEY=your_api_key_here  # Get from https://console.groq.com/keys
+# Create .env file
+GROQ_API_KEY=your_groq_api_key_here
+LOG_LEVEL=INFO
+ENVIRONMENT=production
 ```
 
-### 3. Run
-```powershell
-# Start server
-uvicorn server:app --host 127.0.0.1 --port 8000
-
-# Access API docs
-# http://127.0.0.1:8000/docs
+4. **Run the server**
+```bash
+python server.py
 ```
 
-### 4. Test
-```powershell
-# Using PowerShell
-$body = @{log_entries=@("User User123 logged in.")} | ConvertTo-Json
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/classify/" -Method POST -ContentType "application/json" -Body $body
-
-# Using curl
-curl -X POST http://127.0.0.1:8000/classify/ -H "Content-Type: application/json" -d "{\"log_entries\":[\"User User123 logged in.\"]}"
+5. **Access the dashboard**
+```
+Open http://localhost:8000 in your browser
 ```
 
----
+## 🎯 Usage
+
+### Web Interface
+
+1. **Open Dashboard**: Navigate to `http://localhost:8000`
+2. **Upload File**: Drag & drop or browse for your log file
+   - Supports: `.csv`, `.log`, `.txt`, `.json`, `.jsonl`
+3. **Automatic Processing**: System detects format and classifies logs
+4. **View Analytics**: See severity breakdown and category distribution
+5. **Download Results**: Get classified logs with severity levels
+
+### Command-Line Conversion
+
+Convert raw log files to CSV before upload:
+
+```bash
+# Plain text logs
+python log_converter.py app.log output.csv --format plain
+
+# Timestamped logs
+python log_converter.py system.log output.csv --format timestamped
+
+# JSON logs
+python log_converter.py app.jsonl output.csv --format json
+
+# Syslog format
+python log_converter.py syslog.txt output.csv --format syslog
+```
+
+### API Endpoints
+
+#### Classification
+```bash
+POST /classify/
+Content-Type: multipart/form-data
+
+# Upload any supported file format
+curl -X POST -F "file=@logs.csv" http://localhost:8000/classify/
+```
+
+#### Health Check
+```bash
+GET /health
+
+# Response
+{
+  "status": "healthy",
+  "version": "1.0.0",
+  "services": {
+    "classification_engine": "healthy",
+    "secondary_classifier": "healthy",
+    "file_system": "healthy"
+  }
+}
+```
+
+#### Metrics
+```bash
+GET /metrics
+
+# Response
+{
+  "total_classifications": 1250,
+  "classifications_by_method": {
+    "regex": 450,
+    "bert": 720,
+    "llm": 80
+  },
+  "average_processing_time_ms": 125.5,
+  "error_rate": 0.02,
+  "uptime_seconds": 3600
+}
+```
+
+## 📊 Classification Categories
+
+| Category | Severity | Description |
+|----------|----------|-------------|
+| Critical Error | CRITICAL 🔴 | System-breaking errors requiring immediate action |
+| Error | HIGH 🟠 | Significant issues needing urgent attention |
+| Security Alert | HIGH 🟠 | Authentication failures, security breaches |
+| Workflow Error | MEDIUM 🟡 | Process failures requiring investigation |
+| Deprecation Warning | MEDIUM 🟡 | Slow queries, deprecated features |
+| HTTP Status | LOW 🟢 | Rate limits, HTTP status codes |
+| Resource Usage | INFO 🔵 | Memory, CPU, disk space metrics |
+| System Notification | INFO 🔵 | Backups, updates, system events |
+| User Action | INFO 🔵 | Login, logout, account operations |
+| Unclassified | UNCLASSIFIED ⚪ | Logs requiring manual review |
 
 ## 🏗️ Architecture
 
 ```
-┌─────────────┐
-│  Log Input  │
-└──────┬──────┘
-       │
-       ▼
-┌──────────────────┐
-│ LegacyCRM logs?  │
-├──────────────────┤
-│  YES → LLM       │─────────┐
-│  NO  → Regex     │         │
-└─────────┬────────┘         │
-          │                  │
-          ▼                  │
-    ┌─────────┐              │
-    │ Matched?│              │
-    └────┬────┘              │
-         │                   │
-    NO   │   YES             │
-         ▼    │              │
-    ┌────────┐│              │
-    │  BERT  ││              │
-    └────────┘│              │
-         │    │              │
-         └────┴──────────────┘
-              ▼
-        Classification Result
+┌─────────────────┐
+│   Web Upload    │
+│  (Any Format)   │
+└────────┬────────┘
+         │
+         v
+┌─────────────────┐
+│  Format Detect  │
+│  & Convert CSV  │
+└────────┬────────┘
+         │
+         v
+┌─────────────────┐
+│  Smart Column   │
+│    Mapping      │
+└────────┬────────┘
+         │
+         v
+┌─────────────────┐
+│ Regex Patterns  │──────> Match? ──> Category
+│   (42 rules)    │          │
+└─────────────────┘          │ No match
+                             v
+                    ┌─────────────────┐
+                    │   BERT Model    │──> 99.6% Accuracy
+                    │   (MiniLM-L6)   │
+                    └────────┬────────┘
+                             │ Low confidence
+                             v
+                    ┌─────────────────┐
+                    │   Groq LLM      │──> Advanced Analysis
+                    │ (llama-3.3-70b) │
+                    └────────┬────────┘
+                             │
+                             v
+                    ┌─────────────────┐
+                    │  Severity Map   │
+                    │  & Analytics    │
+                    └────────┬────────┘
+                             │
+                             v
+                    ┌─────────────────┐
+                    │  CSV Export +   │
+                    │   Dashboard     │
+                    └─────────────────┘
 ```
 
----
+## 🔧 Configuration
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `GROQ_API_KEY` | Groq API key for LLM fallback | Required |
+| `LOG_LEVEL` | Logging level (DEBUG/INFO/WARNING) | INFO |
+| `ENVIRONMENT` | Environment (development/production) | production |
+| `MAX_FILE_SIZE_MB` | Maximum upload file size | 50 |
+| `BERT_MODEL` | Sentence transformer model | all-MiniLM-L6-v2 |
+
+### Settings (config.py)
+
+```python
+app_name = "Log Classification System"
+app_version = "1.0.0"
+max_file_size_mb = 50
+resources_dir = "resources"
+output_file = "resources/output.csv"
+```
 
 ## 📁 Project Structure
 
 ```
-├── server.py              # FastAPI application
-├── classify.py            # Classification orchestrator
-├── processor_regex.py     # Pattern matching
-├── processor_bert.py      # BERT embeddings
-├── processor_llm.py       # LLM integration
-├── config.py              # Configuration
-├── models.py              # Pydantic models
-├── exceptions.py          # Error handling
-├── logger_config.py       # Structured logging
-├── metrics.py             # Performance tracking
-├── requirements.txt       # Dependencies
-├── Dockerfile             # Container image
-├── docker-compose.yml     # Service orchestration
-└── models/
-    └── log_classifier.joblib  # Trained model
+Log_classification_system/
+├── server.py                 # FastAPI server
+├── classify.py              # Classification orchestrator
+├── config.py                # Configuration settings
+├── csv_mapper.py            # Auto column detection
+├── log_converter.py         # Format conversion CLI
+├── processor_regex.py       # Regex classifier (42 patterns)
+├── processor_bert.py        # BERT classifier
+├── processor_llm.py         # Groq LLM classifier
+├── severity_mapper.py       # Severity level mapping
+├── visualization.py         # Analytics generation
+├── models.py                # Pydantic models
+├── exceptions.py            # Custom exceptions
+├── logger_config.py         # Logging configuration
+├── metrics.py               # Performance metrics
+├── requirements.txt         # Python dependencies
+├── .gitignore              # Git ignore rules
+├── LICENSE                  # MIT License
+├── README.md               # This file
+├── templates/
+│   └── dashboard.html      # Web interface
+├── static/
+│   ├── css/
+│   │   └── dashboard.css   # Styles
+│   └── js/
+│       └── dashboard.js    # Frontend logic
+├── models/
+│   └── log_classifier.joblib  # BERT model (99.6% accuracy)
+└── resources/
+    └── test_logs.log       # Sample log file
 ```
 
----
+## 🧪 Testing
 
-## 🔌 API Endpoints
+### Sample Files Included
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | System health check |
-| `/metrics` | GET | Performance metrics |
-| `/classify/` | POST | Classify log entries |
-| `/classify/csv` | POST | Process CSV file |
-| `/plot/` | POST | Generate analytics plot |
-| `/docs` | GET | Interactive API docs |
+- `resources/test_logs.log` - Timestamped logs with mixed severities
+- `Model_training/dataset/synthetic_logs.csv` - Training dataset
 
----
-
-## 🐳 Docker Deployment
+### Run Tests
 
 ```bash
-# Build and run
-docker-compose up -d
+# Upload test file
+curl -X POST -F "file=@resources/test_logs.log" http://localhost:8000/classify/
 
-# Check status
-docker-compose ps
+# Check health
+curl http://localhost:8000/health
 
-# View logs
-docker-compose logs -f
-
-# Stop
-docker-compose down
+# View metrics
+curl http://localhost:8000/metrics
 ```
 
-Server runs on: `http://localhost:8000`
+## 🚀 Performance
 
----
-
-## 📊 Current Capabilities
-
-### ✅ **Working Features**
-- Multi-stage classification (Regex → BERT → LLM)
-- RESTful API with FastAPI
-- Real-time health monitoring
-- Performance metrics tracking
-- Structured JSON logging
-- CSV file processing
-- Pydantic validation
-- Error handling & retries
-- Docker containerization
-- Interactive API documentation
-
-### 📝 **Classification Methods**
-1. **Regex** (8 patterns): User login/logout, backups, system updates
-2. **BERT** (ML model): Trained on 10,000+ log samples
-3. **LLM** (Groq): llama-3.3-70b-versatile for complex patterns
-
-### 📈 **Performance**
-- Regex: <1ms per log
-- BERT: ~50-100ms per log
-- LLM: ~200-500ms per log
-- Throughput: ~100-500 requests/minute
-
----
-
-## 🚀 What's Needed to Finalize
-
-### 🔴 **Critical (Must Fix)**
-
-1. **Security Hardening**
-   ```python
-   # Add to server.py
-   from fastapi import Security, HTTPException
-   from fastapi.security.api_key import APIKeyHeader
-   
-   API_KEY = os.getenv("API_KEY")
-   api_key_header = APIKeyHeader(name="X-API-Key")
-   
-   async def verify_api_key(api_key: str = Security(api_key_header)):
-       if api_key != API_KEY:
-           raise HTTPException(status_code=403, detail="Invalid API Key")
-   ```
-
-2. **Rate Limiting**
-   ```bash
-   pip install slowapi
-   ```
-
-3. **Database Integration**
-   ```bash
-   # Replace CSV with PostgreSQL
-   pip install psycopg2-binary sqlalchemy
-   ```
-
-4. **Production Environment**
-   - Set `debug=False` in config
-   - Use proper secrets manager
-   - Enable HTTPS/TLS
-   - Configure proper CORS origins
-
-### 🟡 **Important (Should Have)**
-
-5. **Comprehensive Testing**
-   ```bash
-   pytest tests/ --cov=. --cov-report=html
-   # Target: 80%+ coverage
-   ```
-
-6. **CI/CD Pipeline**
-   ```yaml
-   # .github/workflows/deploy.yml
-   - Run tests
-   - Build Docker image
-   - Deploy to production
-   ```
-
-7. **Monitoring & Alerting**
-   - Prometheus metrics export
-   - Grafana dashboards
-   - Error alerting (Sentry)
-
-### 🟢 **Nice to Have (Enhancement)**
-
-8. **Async Processing** - Celery/Redis for background jobs
-9. **Caching Layer** - Redis for repeated classifications
-10. **A/B Testing** - Compare model versions
-11. **Auto-scaling** - Kubernetes deployment
-12. **API Versioning** - `/v1/classify/` endpoints
-
----
-
-## 📦 Dependencies
-
-```
-fastapi==0.127.0          # Web framework
-uvicorn==0.40.0           # ASGI server
-pydantic==2.12.5          # Validation
-sentence-transformers     # BERT embeddings
-scikit-learn==1.8.0       # ML model
-groq==1.0.0               # LLM API
-pandas==2.3.3             # Data processing
-python-dotenv==1.2.1      # Environment vars
-```
-
----
+- **Regex Classification**: < 1ms per log
+- **BERT Classification**: ~50ms per log
+- **LLM Fallback**: ~200ms per log
+- **Overall Accuracy**: 99.63%
+- **Throughput**: 1000+ logs/minute
 
 ## 🛠️ Development
 
-```bash
-# Install dev dependencies
-pip install pytest pytest-asyncio pytest-cov black flake8
+### Adding New Patterns
 
-# Run tests
-pytest tests/ -v
+Edit `processor_regex.py`:
 
-# Format code
-black .
-
-# Lint
-flake8 .
-
-# Type check
-mypy .
+```python
+self.regex_patterns: Dict[str, str] = {
+    r"(?i)your_pattern_here": "Your Category",
+    # Add more patterns...
+}
 ```
 
----
+### Adding New Severity Levels
 
-## 📊 Deployment Checklist
+Edit `severity_mapper.py`:
 
-- [ ] Environment variables configured
-- [ ] API key authentication enabled
-- [ ] Rate limiting implemented
-- [ ] Database connected (not CSV)
-- [ ] HTTPS/TLS enabled
-- [ ] Secrets in vault (not .env)
-- [ ] CORS origins whitelisted
-- [ ] Tests passing (80%+ coverage)
-- [ ] Monitoring configured
-- [ ] Backup strategy in place
-- [ ] Logging to external service
-- [ ] Performance tested (load test)
-- [ ] Documentation updated
-- [ ] Docker image built & pushed
-- [ ] Health checks configured
+```python
+class SeverityLevel(str, Enum):
+    YOUR_LEVEL = "YOUR_LEVEL"
 
----
+CATEGORY_SEVERITY_MAP = {
+    "Your Category": SeverityLevel.YOUR_LEVEL,
+}
+```
 
-## 🎯 Immediate Next Steps
+## 📝 API Documentation
 
-**To make this production-ready RIGHT NOW:**
+Interactive API documentation available at:
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
 
-1. **Add authentication** (30 min)
-   - API key validation
-   - Rate limiting
+## 🤝 Contributing
 
-2. **Connect database** (1-2 hours)
-   - PostgreSQL setup
-   - Replace CSV operations
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-3. **Security audit** (1 hour)
-   - Remove API key from .env
-   - Use secrets manager
-   - Configure proper CORS
+## 📄 License
 
-4. **Write tests** (2-3 hours)
-   - Unit tests: 100% coverage of classify.py
-   - Integration tests: Full API flow
-   - Load tests: 1000+ concurrent requests
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-5. **Deploy** (1 hour)
-   - Push to Docker Hub
-   - Deploy to cloud (AWS/Azure/GCP)
-   - Configure CI/CD
+## 🙏 Acknowledgments
 
-**Total Time: 5-7 hours of focused work**
-
----
+- **FastAPI** - Modern web framework
+- **Sentence Transformers** - BERT model for classification
+- **Groq** - LLM API integration
+- **Pandas** - Data processing
+- **Font Awesome** - UI icons
 
 ## 📧 Support
 
-For issues and questions:
-- Check `/docs` endpoint for API documentation
-- Review logs: JSON formatted in console
-- Health check: `http://localhost:8000/health`
-- Metrics: `http://localhost:8000/metrics`
+For issues, questions, or contributions:
+- GitHub Issues: [Create an issue](https://github.com/yourusername/log-classification-system/issues)
+- Documentation: See [LOG_CONVERSION_GUIDE.md](LOG_CONVERSION_GUIDE.md)
 
 ---
 
-## 📜 License
-
-MIT License - See LICENSE file for details
-
----
-
-**Status:** ✅ Working locally | ⚠️ Needs security hardening for production
+**Built with ❤️ for enterprise log management**
