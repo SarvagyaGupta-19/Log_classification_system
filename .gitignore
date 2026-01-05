@@ -1,51 +1,77 @@
-# Python cache files
+# Python
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
+*$py.class
 *.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Virtual environments
+# Virtual Environment
 venv/
-.venv/
+ENV/
 env/
-.env/
+.venv
 
-# Environment files
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment variables
 .env
-*.env
-
-# Jupyter Notebook checkpoints
-.ipynb_checkpoints/
-
-# Output files from your app
-resources/output.csv
-resources/bar_plot.png
+.env.local
 
 # Logs
 *.log
+logs/
+*.log.*
 
-# OS-specific files
-.DS_Store
-Thumbs.db
+# Model files (too large for git)
+models/*.joblib
+models/*.pkl
+models/*.h5
+models/*.pt
 
-# VS Code settings
-.vscode/
+# Resources (generated files)
+resources/output.csv
+resources/classified_*.csv
+resources/test*.csv
+resources/temp_*
 
-# PyCharm/JetBrains settings
-.idea/
+# Training data (keep synthetic_logs.csv)
+Model_training/*.csv
+!Model_training/dataset/synthetic_logs.csv
 
-# Static cache
-static/*.cache
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
 
-# Build artifacts
-dist/
-build/
-*.egg-info/
+# Coverage
+.coverage
+htmlcov/
 
-# Pip cache
-pip-wheel-metadata/
-__pypackages__/
+# pytest
+.pytest_cache/
 
-# Uploaded files (if applicable)
-uploads/
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
