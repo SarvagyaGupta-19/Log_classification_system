@@ -1,4 +1,4 @@
-""""
+"""
 Centralized configuration management with environment variable support
 
 12-factor app principles: All config through environment variables.
@@ -18,6 +18,7 @@ Environment Loading:
 Caching: @lru_cache ensures singleton behavior
 """
 from pydantic_settings import BaseSettings
+from pydantic import Field
 from functools import lru_cache
 import os
 
@@ -28,8 +29,8 @@ class Settings(BaseSettings):
     # Application
     app_name: str = "Log Classification System"
     app_version: str = "1.0.0"
-    environment: str = "development"
-    debug: bool = True
+    environment: str = Field(default="production", env="ENVIRONMENT")
+    debug: bool = Field(default=False, env="DEBUG")
     
     # Server
     host: str = "0.0.0.0"
@@ -54,11 +55,11 @@ class Settings(BaseSettings):
     max_file_size_mb: int = 50
     
     # LLM API
-    groq_api_key: str = ""
+    groq_api_key: str = Field(default="", env="GROQ_API_KEY")
     
     # Monitoring
     enable_metrics: bool = True
-    log_level: str = "INFO"
+    log_level: str = Field(default="INFO", env="LOG_LEVEL")
     
     class Config:
         env_file = ".env"

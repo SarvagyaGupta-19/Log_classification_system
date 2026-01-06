@@ -61,11 +61,17 @@ pip install -r requirements.txt
 
 3. **Set up environment variables**
 ```bash
-# Create .env file
+# Copy example file
+copy .env.example .env
+
+# Edit .env and add your API key
 GROQ_API_KEY=your_groq_api_key_here
-LOG_LEVEL=INFO
 ENVIRONMENT=production
+DEBUG=False
+LOG_LEVEL=INFO
 ```
+
+> **Note**: Get your Groq API key from https://console.groq.com/keys
 
 4. **Run the server**
 ```bash

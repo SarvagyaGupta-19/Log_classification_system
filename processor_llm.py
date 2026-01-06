@@ -34,6 +34,14 @@ class LLMClassifier:
     def __init__(self):
         """Initialize LLM client"""
         try:
+            # Validate API key
+            if not settings.groq_api_key or settings.groq_api_key == "":
+                logger.error("Groq API key not configured")
+                raise LLMAPIError(
+                    "GROQ_API_KEY not set. Please configure it in .env file. "
+                    "Get your API key from: https://console.groq.com/keys"
+                )
+            
             self.client = Groq(api_key=settings.groq_api_key)
             self.model = settings.llm_model_name
             self.temperature = settings.llm_temperature
