@@ -165,26 +165,24 @@ async def global_exception_handler(request: Request, exc: Exception):
 @app.get("/health", response_model=HealthStatus, tags=["Monitoring"])
 async def health_check():
     """
-    Health check endpoint
-    Returns service status and component health
+    Lightweight health check endpoint
+    Returns service status WITHOUT loading heavy models
     """
     try:
-        bert_classifier = get_bert_classifier()
-        bert_healthy = bert_classifier.health_check()
-        
-        # LLM check is optional since it requires API call
-        llm_healthy = True  # Assume healthy, will fail gracefully if not
+        # Check basic service health WITHOUT loading BERT model
+        # BERT will load lazily on first classification request
+        from processor_bert import _classifier as bert_loaded
+        from processor_llm import _classifier as llm_loaded
         
         services = {
-            "classification_engine": "healthy" if bert_healthy else "unhealthy",
-            "secondary_classifier": "healthy" if llm_healthy else "degraded",
+            "server": "healthy",
+            "bert_loaded": "ready" if bert_loaded is not None else "lazy_load",
+            "llm_configured": "ready" if settings.groq_api_key else "not_configured",
             "file_system": "healthy" if os.path.exists(settings.resources_dir) else "unhealthy"
         }
         
-        overall_status = "healthy" if all(s == "healthy" for s in services.values()) else "degraded"
-        
         return HealthStatus(
-            status=overall_status,
+            status="healthy",
             version=settings.app_version,
             services=services
         )
