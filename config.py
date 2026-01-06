@@ -36,6 +36,15 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
     workers: int = 1
+    cors_origins: str = Field(
+        default="http://localhost:8000,http://127.0.0.1:8000",
+        env="CORS_ORIGINS"
+    )
+    
+    # Rate Limiting
+    rate_limit_enabled: bool = Field(default=False, env="RATE_LIMIT_ENABLED")
+    rate_limit_requests: int = Field(default=100, env="RATE_LIMIT_REQUESTS")
+    rate_limit_window: int = Field(default=60, env="RATE_LIMIT_WINDOW")  # seconds
     
     # Paths
     resources_dir: str = "resources"

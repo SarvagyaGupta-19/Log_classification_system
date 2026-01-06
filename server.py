@@ -72,18 +72,32 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# CORS middleware
+# CORS middleware - origins configurable via CORS_ORIGINS env variable
+allowed_origins = [origin.strip() for origin in settings.cors_origins.split(",")]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-        "http://localhost:3000",
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
+
+logger.info("CORS configured", extra={"allowed_origins": allowed_origins})
+
+# Rate limiting middleware (production protection)
+if settings.rate_limit_enabled:
+    from rate_limiter import create_rate_limiter, RateLimitMiddleware
+    rate_limiter = create_rate_limiter(
+        settings.rate_limit_requests,
+        settings.rate_limit_window
+    )
+    app.add_middleware(RateLimitMiddleware, rate_limiter=rate_limiter)
+    logger.info("Rate limiting enabled", extra={
+        "requests_per_window": settings.rate_limit_requests,
+        "window_seconds": settings.rate_limit_window
+    })
+else:
+    logger.info("Rate limiting disabled")
 
 
 @app.middleware("http")
