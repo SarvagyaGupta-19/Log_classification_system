@@ -10,9 +10,9 @@ license: mit
 
 # Log Classification System
 
-Enterprise-grade log classification and severity analysis system powered by machine learning.
+> Enterprise-grade log classification and severity analysis system powered by machine learning
 
-## Features
+## 🚀 Features
 - 🤖 Multi-stage ML Pipeline (Regex → BERT → LLM)
 - 📊 99.63% BERT Classification Accuracy
 - 🔍 42 Regex Patterns for Fast Matching
