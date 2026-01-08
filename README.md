@@ -7,27 +7,47 @@ sdk: docker
 app_port: 7860
 ---
 
-# Log Classification System
+# 🔍 Log Classification System
 
-> Enterprise-grade log classification and severity analysis system powered by machine learning
+**Automated log analysis powered by a three-tier machine learning pipeline**
 
-## 🚀 Features
-- 🤖 Multi-stage ML Pipeline (Regex → BERT → LLM)
-- 📊 99.63% BERT Classification Accuracy
-- 🔍 42 Regex Patterns for Fast Matching
-- 🎯 6 Severity Levels (CRITICAL → INFO)
-- 🌐 Universal Format Support (CSV, JSON, TXT, LOG)
-- 📈 Real-time Analytics Dashboard
+🌐 **[Try Live Demo](https://19sarvagya-log-classification-system.hf.space/dashboard)**
 
-## Live Demo
-Upload any log file and see real-time classification with severity analysis!
+---
 
-## Tech Stack
-- FastAPI + Uvicorn
-- BERT (sentence-transformers)
-- Groq LLM API
-- Docker containerization
-- Production-ready architecture
+## Overview
 
-## GitHub
-[View Source Code](https://github.com/SarvagyaGupta-19/Log_classification_system)
+Intelligent log classification system that automatically analyzes log files and categorizes them by severity using a multi-stage ML approach. Built for production environments with scalability and accuracy in mind.
+
+## Key Features
+
+✅ **Three-Tier ML Pipeline** — Regex pattern matching → BERT neural network → LLM fallback  
+✅ **90.63% Accuracy** — BERT model trained on real-world log datasets  
+✅ **42 Optimized Patterns** — Pre-trained regex rules for instant classification  
+✅ **6 Severity Levels** — CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG  
+✅ **Universal Support** — CSV, JSON, TXT, LOG file formats  
+✅ **Real-Time Dashboard** — Interactive analytics with instant visual feedback
+
+## Architecture
+
+**Stage 1:** Pattern-based regex classification (fastest, ~70% coverage)  
+**Stage 2:** BERT transformer model (high accuracy, handles complex logs)  
+**Stage 3:** Groq LLM API (fallback for edge cases)
+
+## Technology Stack
+
+- **Backend:** FastAPI, Python 3.11, Pydantic validation
+- **ML Models:** BERT (sentence-transformers), Groq LLM (llama-3.3-70b)
+- **Deployment:** Docker containerization, Hugging Face Spaces
+- **Features:** Rate limiting, health checks, CORS, environment-based config
+
+## Use Cases
+
+- Security incident response and threat detection
+- Production system monitoring and alerting
+- Compliance auditing and log retention
+- DevOps troubleshooting and debugging
+
+---
+
+**GitHub:** [SarvagyaGupta-19/Log_classification_system](https://github.com/SarvagyaGupta-19/Log_classification_system)
