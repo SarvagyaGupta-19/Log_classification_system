@@ -338,13 +338,15 @@ async def classify_logs(file: UploadFile, request: Request):
             })
             
             # Read file content
-            await file.seek(0)
-            content = content.decode('utf-8', errors='ignore')
+            # Content was already read as bytes at start of function
+            # Decode to string for processing
+            content_str = content.decode('utf-8', errors='ignore')
             
             # Save to temporary file for parsing
+            os.makedirs(settings.resources_dir, exist_ok=True)
             temp_file_path = os.path.join(settings.resources_dir, f"temp_{request_id}{file_ext}")
             with open(temp_file_path, 'w', encoding='utf-8') as f:
-                f.write(content)
+                f.write(content_str)
             
             # Detect format and convert
             logs = []
@@ -394,6 +396,7 @@ async def classify_logs(file: UploadFile, request: Request):
                 })
             
             except Exception as e:
+                # Ensure temp file is cleaned up even on error
                 if os.path.exists(temp_file_path):
                     os.remove(temp_file_path)
                 raise HTTPException(
@@ -401,6 +404,13 @@ async def classify_logs(file: UploadFile, request: Request):
                     detail=f"Failed to parse log file: {str(e)}"
                 )
         
+        # Ensure df is not None before proceeding
+        if df is None:
+             raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal error: Data processing failed unexpectedly."
+            )
+
         # Check if CSV is empty
         if df.empty or len(df) == 0:
             raise HTTPException(
