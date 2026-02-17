@@ -117,6 +117,6 @@ pytest tests/
 ## 👨‍💻 Author
 
 **Sarvagya Gupta**  
-*Machine Learning Engineer & Full Stack Developer*  
+*Machine Learning Engineer
 
-[GitHub](https://github.com/SarvagyaGupta-19) | [LinkedIn](https://linkedin.com/in/sarvagyagupta)
+[GitHub](https://github.com/SarvagyaGupta-19) | [LinkedIn](https://linkedin.com/in/sarvagyagupta019)
