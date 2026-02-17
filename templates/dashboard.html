@@ -2,222 +2,144 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>Log Classification System - Enterprise Log Management</title>
-    <meta name="description" content="Enterprise-grade log classification and analysis platform for modern IT operations">
-    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23f59e0b' width='100' height='100' rx='12'/><rect fill='%2310b981' x='20' y='30' width='15' height='40' rx='3'/><rect fill='%23a78bfa' x='40' y='20' width='15' height='50' rx='3'/><rect fill='%23f43f5e' x='60' y='35' width='15' height='35' rx='3'/><rect fill='%2360a5fa' x='10' y='75' width='80' height='15' rx='5'/><text x='50' y='87' text-anchor='middle' font-size='10' font-weight='bold' fill='white'>LOG</text></svg>">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Classification System | Enterprise AI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/static/css/dashboard.css">
+    <!-- Chart.js for data viz -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <!-- Header -->
+    
     <header class="top-header">
         <div class="header-container">
             <div class="logo">
-                <i class="fas fa-chart-bar"></i>
+                <i class="fas fa-cube"></i>
                 <div class="logo-text">
-                    <h1>Log Classification System</h1>
+                    <h1>LogAI <span style="font-weight:400; opacity:0.7">Classifier</span></h1>
                 </div>
             </div>
             <div class="header-stats">
                 <div class="stat-pill">
-                    <i class="fas fa-check-circle"></i>
-                    <span id="totalLogs">0</span>
+                    <i class="fas fa-history"></i>
+                    <span id="totalLogs">0</span> Processed
                 </div>
                 <div class="stat-pill status">
-                    <i class="fas fa-circle"></i>
+                    <i class="fas fa-circle" style="font-size: 8px;"></i>
                     System Online
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="container">
-        <!-- Upload Section -->
-        <section class="upload-card" id="uploadSection">
+        
+        <!-- Upload Section (Glass Panel) -->
+        <section class="upload-card glass-panel" id="uploadSection">
             <div class="card-header">
-                <h2><i class="fas fa-upload"></i> Upload & Classify Logs</h2>
-                <p>Advanced log classification and severity analysis for enterprise operations</p>
+                <h2>AI-Powered Log Analysis</h2>
+                <p>Drag & drop log files to detect anomalies and classify severity instantly.</p>
             </div>
 
-            <!-- Upload Area -->
+            <!-- Upload Zone -->
             <div id="uploadArea" class="upload-zone">
                 <input type="file" id="fileInput" accept=".csv,.log,.txt,.json,.jsonl" hidden>
                 <div class="upload-content">
-                    <div class="upload-icon">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                    </div>
-                    <h3>Drag & Drop Log File</h3>
-                    <p>CSV, LOG, TXT, JSON formats supported</p>
+                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                    <h3>Drop your log file here</h3>
+                    <p style="color: var(--text-muted); margin-bottom: 2rem;">Supports CSV, JSON, LOG, TXT</p>
                     <button class="btn-primary" type="button" id="browseBtn">
-                        <i class="fas fa-folder-open"></i>
-                        Browse Files
+                        Select File
                     </button>
-                </div>
-                <div class="format-help">
-                    <div class="help-header">
-                        <i class="fas fa-info-circle"></i>
-                        Supported File Formats
-                    </div>
-                    <div class="help-content">
-                        <code>
-<span class="code-header">✓ CSV:</span> Any column names (auto-detected)
-<span class="code-header">✓ LOG/TXT:</span> Plain text or timestamped logs
-<span class="code-header">✓ JSON:</span> One JSON object per line
-<span class="code-header">✓ Auto-conversion:</span> All formats → classified
-                        </code>
-                    </div>
                 </div>
             </div>
 
             <!-- File Selected State -->
-            <div id="fileSelected" class="file-selected" style="display:none;">
-                <div class="file-info">
-                    <div class="file-icon-large">
-                        <i class="fas fa-file-csv"></i>
-                    </div>
-                    <div class="file-details">
-                        <h3 id="fileName"></h3>
-                        <p id="fileSize"></p>
-                    </div>
-                </div>
-                <div class="file-actions">
-                    <button class="btn-secondary" id="cancelBtn">
-                        <i class="fas fa-times"></i> Cancel
-                    </button>
-                    <button class="btn-success" id="classifyBtn">
-                        <i class="fas fa-rocket"></i> Start Classification
+            <div id="fileSelected" style="display:none; padding: 3rem; text-align: center;">
+                <i class="fas fa-file-code" style="font-size: 4rem; color: var(--text-highlight); margin-bottom: 1rem;"></i>
+                <h3 id="fileName" style="font-size: 1.5rem; margin-bottom: 0.5rem;">filename.log</h3>
+                <p id="fileSize" style="color: var(--text-muted); margin-bottom: 2rem;">2.4 MB</p>
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <button class="btn-secondary" id="cancelBtn">Cancel</button>
+                    <button class="btn-primary" id="classifyBtn">
+                        <i class="fas fa-bolt"></i> Analyze Logs
                     </button>
                 </div>
             </div>
 
             <!-- Processing State -->
-            <div id="processing" class="processing" style="display:none;">
-                <div class="processing-animation">
-                    <div class="spinner"></div>
-                    <i class="fas fa-cog processing-icon"></i>
-                </div>
-                <h3 id="progressText">Initializing classification engine...</h3>
+            <div id="processing" style="display:none; padding: 4rem 2rem; text-align: center;">
+                <div class="spinner"></div>
+                <h3 id="progressText" style="margin-bottom: 1rem;">Initializing neural engine...</h3>
                 <div class="progress-container">
                     <div class="progress-bar" id="progressBar"></div>
                 </div>
-                <p class="processing-info">
-                    <i class="fas fa-shield-alt"></i> Processing with enterprise-grade security
-                </p>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Processing locally on secure instance</p>
             </div>
 
-            <!-- Success State -->
-            <div id="successState" class="success-state" style="display:none;">
-                <div class="success-icon">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <h3>Classification Completed</h3>
-                <p id="successMessage">Successfully processed log entries</p>
-                <div class="success-actions">
-                    <button class="btn-download" id="downloadBtn">
-                        <i class="fas fa-download"></i> Download Results
-                    </button>
-                    <button class="btn-secondary" id="newUploadBtn">
-                        <i class="fas fa-plus"></i> Classify Another File
+            <!-- Success Actions -->
+            <div id="successState" style="display:none; padding: 3rem; text-align: center;">
+                <i class="fas fa-check-circle" style="font-size: 4rem; color: #10b981; margin-bottom: 1rem;"></i>
+                <h3 style="margin-bottom: 2rem;">Analysis Complete</h3>
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <button class="btn-secondary" id="newUploadBtn">Analyze Another</button>
+                    <button class="btn-primary" id="downloadBtn">
+                        <i class="fas fa-download"></i> Download Report
                     </button>
                 </div>
             </div>
         </section>
 
-        <!-- Analytics Section (Hidden until classification) -->
+        <!-- Analytics Dashboard (Hidden initially) -->
         <section class="analytics-section" id="analyticsSection" style="display:none;">
             <div class="section-header">
-                <h2><i class="fas fa-chart-pie"></i> Classification Results</h2>
-                <p>Comprehensive severity analysis and log distribution metrics</p>
+                <h2>Analysis Insights</h2>
             </div>
 
-            <!-- Severity Grid -->
-            <div class="severity-grid">
-                <div class="severity-card critical">
-                    <div class="severity-icon">
-                        <i class="fas fa-skull-crossbones"></i>
+            <div class="results-grid">
+                <!-- Severity Cards -->
+                <div class="severity-grid">
+                    <div class="severity-card critical">
+                        <span class="severity-count" id="criticalCount">0</span>
+                        <span class="severity-label">Critical</span>
                     </div>
-                    <div class="severity-data">
-                        <div class="severity-count" id="criticalCount">0</div>
-                        <div class="severity-label">Critical</div>
+                    <div class="severity-card high">
+                        <span class="severity-count" id="highCount">0</span>
+                        <span class="severity-label">High</span>
                     </div>
-                    <div class="severity-desc">System failures</div>
+                    <div class="severity-card medium">
+                        <span class="severity-count" id="mediumCount">0</span>
+                        <span class="severity-label">Medium</span>
+                    </div>
+                    <div class="severity-card low">
+                        <span class="severity-count" id="lowCount">0</span>
+                        <span class="severity-label">Low</span>
+                    </div>
+                    <div class="severity-card info">
+                        <span class="severity-count" id="infoCount">0</span>
+                        <span class="severity-label">Info</span>
+                    </div>
+                    <div class="severity-card unclassified">
+                        <span class="severity-count" id="unclassifiedCount">0</span>
+                        <span class="severity-label">Unknown</span>
+                    </div>
                 </div>
 
-                <div class="severity-card high">
-                    <div class="severity-icon">
-                        <i class="fas fa-exclamation-triangle"></i>
+                <!-- Chart.js Visualization -->
+                <div class="chart-card">
+                    <h3>Category Distribution</h3>
+                    <div style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="categoryChart"></canvas>
                     </div>
-                    <div class="severity-data">
-                        <div class="severity-count" id="highCount">0</div>
-                        <div class="severity-label">High</div>
-                    </div>
-                    <div class="severity-desc">Immediate attention</div>
                 </div>
-
-                <div class="severity-card medium">
-                    <div class="severity-icon">
-                        <i class="fas fa-info-circle"></i>
-                    </div>
-                    <div class="severity-data">
-                        <div class="severity-count" id="mediumCount">0</div>
-                        <div class="severity-label">Medium</div>
-                    </div>
-                    <div class="severity-desc">Monitor activity</div>
-                </div>
-
-                <div class="severity-card low">
-                    <div class="severity-icon">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div class="severity-data">
-                        <div class="severity-count" id="lowCount">0</div>
-                        <div class="severity-label">Low</div>
-                    </div>
-                    <div class="severity-desc">Standard operations</div>
-                </div>
-
-                <div class="severity-card info">
-                    <div class="severity-icon">
-                        <i class="fas fa-lightbulb"></i>
-                    </div>
-                    <div class="severity-data">
-                        <div class="severity-count" id="infoCount">0</div>
-                        <div class="severity-label">Info</div>
-                    </div>
-                    <div class="severity-desc">Informational</div>
-                </div>
-
-                <div class="severity-card unclassified">
-                    <div class="severity-icon">
-                        <i class="fas fa-question-circle"></i>
-                    </div>
-                    <div class="severity-data">
-                        <div class="severity-count" id="unclassifiedCount">0</div>
-                        <div class="severity-label">Unclassified</div>
-                    </div>
-                    <div class="severity-desc">Needs review</div>
-                </div>
-            </div>
-
-            <!-- Category Breakdown -->
-            <div class="category-breakdown">
-                <h3><i class="fas fa-layer-group"></i> Category Distribution</h3>
-                <div class="category-list" id="categoryList"></div>
             </div>
         </section>
+
     </main>
 
-    <!-- Toast Notifications -->
     <div id="toast" class="toast"></div>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <p>&copy; 2026 Log Classification System. All rights reserved.</p>
-    </footer>
 
     <script src="/static/js/dashboard.js"></script>
 </body>

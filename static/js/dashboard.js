@@ -251,25 +251,92 @@ function showAnalytics() {
     }, 500);
 }
 
+let categoryChart = null;
+
 function updateCategoryBreakdown(categoryStats) {
-    const categoryList = document.getElementById('categoryList');
+    const canvas = document.getElementById('categoryChart');
+    if (!canvas) return;
     
-    if (!categoryStats || Object.keys(categoryStats).length === 0) {
-        categoryList.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">No category data available</p>';
-        return;
+    const ctx = canvas.getContext('2d');
+    
+    if (categoryChart) {
+        categoryChart.destroy();
     }
     
-    // Sort categories by count
-    const sortedCategories = Object.entries(categoryStats)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 10); // Top 10 categories
+    if (!categoryStats || Object.keys(categoryStats).length === 0) {
+        return; 
+    }
     
-    categoryList.innerHTML = sortedCategories.map(([category, count]) => `
-        <div class="category-item">
-            <span class="category-name">${category}</span>
-            <span class="category-count">${count}</span>
-        </div>
-    `).join('');
+    // Sort and slice top 10 for chart
+    const sortedEntries = Object.entries(categoryStats)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 10);
+        
+    const labels = sortedEntries.map(([k]) => k);
+    const data = sortedEntries.map(([, v]) => v);
+    
+    // Premium Color Palette
+    const colors = [
+        '#6366f1', // Indigo
+        '#8b5cf6', // Violet
+        '#ec4899', // Pink
+        '#10b981', // Emerald
+        '#f59e0b', // Amber
+        '#3b82f6', // Blue
+        '#06b6d4', // Cyan
+        '#84cc16', // Lime
+        '#f43f5e', // Rose
+        '#64748b'  // Slate
+    ];
+    
+    categoryChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors,
+                borderWidth: 0,
+                hoverOffset: 15,
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: '#94a3b8',
+                        font: {
+                            family: 'Inter',
+                            size: 11,
+                            weight: 500
+                        },
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                    titleColor: '#f8fafc',
+                    bodyColor: '#cbd5e1',
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: true
+                }
+            },
+            animation: {
+                animateScale: true,
+                animateRotate: true,
+                duration: 1000,
+                easing: 'easeOutQuart'
+            }
+        }
+    });
 }
 
 async function downloadResults() {
