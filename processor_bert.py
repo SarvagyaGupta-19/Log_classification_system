@@ -160,5 +160,8 @@ if __name__ == "__main__":
         "Server A790 was restarted unexpectedly during the process of data transfer"
     ]
     for log in logs:
-        label = classify_with_bert(log)
-        print(log, "->", label)
+        try:
+            label = classify_with_bert(log)
+            print(log, "->", label)
+        except Exception as e:
+            print(f"Error classifying {log}: {e}")

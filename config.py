@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     port: int = 8000
     workers: int = 1
     cors_origins: str = Field(
-        default="*",
+        default="http://localhost:8000,http://127.0.0.1:8000",
         env="CORS_ORIGINS"
     )
     

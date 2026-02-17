@@ -1,53 +1,122 @@
----
-title: Log Classification System
-emoji: 📊
-colorFrom: blue
-colorTo: green
-sdk: docker
-app_port: 7860
----
+# 🧠 Intelligent Log Classification System
 
-# 🔍 Log Classification System
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688?logo=fastapi&logoColor=white)
+![BERT](https://img.shields.io/badge/ML-BERT-FF6F00?logo=google&logoColor=white)
+![Groq](https://img.shields.io/badge/AI-Groq-F54900)
+![License](https://img.shields.io/badge/License-MIT-blue.svg)
 
-**Automated log analysis powered by a three-tier machine learning pipeline**
-
-🌐 **[Try Live Demo](https://19sarvagya-log-classification-system.hf.space/dashboard)**
+> **A production-grade machine learning system that automates log analysis using a multi-stage hybrid architecture.**
 
 ---
 
-## Overview
+## 🚀 Overview
 
-Intelligent log classification system that automatically analyzes log files and categorizes them by severity using a multi-stage ML approach. Built for production environments with scalability and accuracy in mind.
+The **Log Classification System** is an enterprise-ready solution designed to automate the categorization of system logs. It moves beyond simple keyword matching by employing a **Three-Tier Waterfall Architecture** that balances speed, accuracy, and cost.
 
-## Key Features
+It solves the problem of "alert fatigue" in DevOps environments by intelligently distinguishing between critical infrastructure failures (which need immediate attention) and routine operational noise.
 
-✅ **Three-Tier ML Pipeline** — Regex pattern matching → BERT neural network → LLM fallback  
-✅ **90.63% Accuracy** — BERT model trained on real-world log datasets  
-✅ **42 Optimized Patterns** — Pre-trained regex rules for instant classification  
-✅ **6 Severity Levels** — CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG  
-✅ **Universal Support** — CSV, JSON, TXT, LOG file formats  
-✅ **Real-Time Dashboard** — Interactive analytics with instant visual feedback
+## 🏗️ System Architecture
 
-## Architecture
+The core innovation is the **Hybrid Classification Pipeline**, which intelligently routes logs through three progressively smarter stages to optimize for latency and compute resources:
 
-**Stage 1:** Pattern-based regex classification (fastest, ~70% coverage)  
-**Stage 2:** BERT transformer model (high accuracy, handles complex logs)  
-**Stage 3:** Groq LLM API (fallback for edge cases)
+```mermaid
+graph TD
+    A[Incoming Log Stream] -->|Tier 1| B{Regex Engine}
+    B -- Match Found (<1ms) --> C[High-Confidence Classification]
+    B -- No Match --> D{Tier 2: BERT Model}
+    D -- Confidence > 80% (~50ms) --> C
+    D -- Low Confidence --> E{Tier 3: LLM Reasoner}
+    E -- Logical Inference (~1s) --> C
+```
 
-## Technology Stack
-
-- **Backend:** FastAPI, Python 3.11, Pydantic validation
-- **ML Models:** BERT (sentence-transformers), Groq LLM (llama-3.3-70b)
-- **Deployment:** Docker containerization, Hugging Face Spaces
-- **Features:** Rate limiting, health checks, CORS, environment-based config
-
-## Use Cases
-
-- Security incident response and threat detection
-- Production system monitoring and alerting
-- Compliance auditing and log retention
-- DevOps troubleshooting and debugging
+| Tier | Technology | Latency | Use Case |
+| :--- | :--- | :--- | :--- |
+| **1. Regex** | Compiled Patterns | **<1ms** | Instantly catches ~70% of known, repetitive logs (e.g., HTTP 200). |
+| **2. BERT** | `all-MiniLM-L6-v2` | **~50ms** | Semantic search for logs with varying phrasing but similar meaning. |
+| **3. LLM** | Groq (`llama-3-70b`) | **~1s** | Handles edge cases, deprecated warnings, and complex reasoning. |
 
 ---
 
-**GitHub:** [SarvagyaGupta-19/Log_classification_system](https://github.com/SarvagyaGupta-19/Log_classification_system)
+## ✨ Key Features
+
+### 🖥️ Professional Dashboard
+A modern, dark-mode web interface designed for Ops teams, featuring **Glassmorphism** UI principles.
+*   **Drag-and-Drop** log file upload (CSV, JSON, LOG).
+*   **Real-time Visualization** with interactive Chart.js analytics.
+*   **Responsive layouts** for mobile and desktop monitoring.
+
+### 🛡️ Engineering Excellence
+*   **Rate Limiting:** Protects API endpoints from abuse using token buckets.
+*   **Async Processing:** Non-blocking FastAPI architecture for high-throughput ingestion.
+*   **Robust Error Handling:** graceful degradation if ML models fail.
+*   **Secure:** CORS configured and environment-variable driven configuration.
+
+---
+
+## 🛠️ Technology Stack
+
+| Component | Technology | Why? |
+| :--- | :--- | :--- |
+| **Backend** | **FastAPI** | High-performance, async Python web framework. |
+| **ML Core** | **PyTorch / BERT** | State-of-the-art semantic embedding generation. |
+| **AI Inference** | **Groq LPU** | Ultra-low latency inference for LLM fallback. |
+| **Data Processing** | **Pandas** | Efficient handling of large CSV/JSON datasets. |
+| **Frontend** | **Vanilla JS / CSS** | Lightweight, dependency-free dashboard for max performance. |
+| **Testing** | **Pytest** | Comprehensive unit and integration testing coverage. |
+
+---
+
+## 📦 Installation & Setup
+
+### Prerequisites
+*   Python 3.11+
+*   Groq API Key (Required for Tier 3 classification)
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/SarvagyaGupta-19/Log_classification_system.git
+cd Log_classification_system
+```
+
+### 2. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Configure Environment
+Create a `.env` file in the root directory:
+```env
+# Required for Stage 3 (LLM)
+GROQ_API_KEY=your_groq_api_key_here
+
+# Application Settings
+DEBUG=False
+LOG_LEVEL=INFO
+```
+
+### 4. Run the Server
+```bash
+uvicorn server:app --reload
+```
+
+Access the dashboard at: `http://localhost:8000`
+
+---
+
+## 🧪 Testing
+
+Run the automated test suite to verify the pipeline integration:
+
+```bash
+pytest tests/
+```
+
+---
+
+## 👨‍💻 Author
+
+**Sarvagya Gupta**  
+*Machine Learning Engineer & Full Stack Developer*  
+
+[GitHub](https://github.com/SarvagyaGupta-19) | [LinkedIn](https://linkedin.com/in/sarvagyagupta)
