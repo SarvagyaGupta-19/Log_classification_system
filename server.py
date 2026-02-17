@@ -100,6 +100,12 @@ else:
     logger.info("Rate limiting disabled")
 
 
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+async def root(request: Request):
+    """Serve the dashboard"""
+    return templates.TemplateResponse("dashboard.html", {"request": request})
+
+
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     """Log all requests and add request ID"""
