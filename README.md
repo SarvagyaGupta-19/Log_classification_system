@@ -1,4 +1,4 @@
-# 🧠 Intelligent Log Classification System
+# 🧠3-Tier-ML-Pipeline-For-Logs-Analysis
 
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688?logo=fastapi&logoColor=white)
@@ -6,13 +6,13 @@
 ![Groq](https://img.shields.io/badge/AI-Groq-F54900)
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 
-> **A production-grade machine learning system that automates log analysis using a multi-stage hybrid architecture.**
+> **A machine learning system that automates log analysis using a multi-stage hybrid architecture.**
 
 ---
 
 ## 🚀 Overview
 
-The **Log Classification System** is an enterprise-ready solution designed to automate the categorization of system logs. It moves beyond simple keyword matching by employing a **Three-Tier Waterfall Architecture** that balances speed, accuracy, and cost.
+The **Model* is an enterprise-ready solution designed to automate the categorization of system logs. It moves beyond simple keyword matching by employing a **Three-Tier Waterfall Architecture** that balances speed, accuracy, and cost.
 
 It solves the problem of "alert fatigue" in DevOps environments by intelligently distinguishing between critical infrastructure failures (which need immediate attention) and routine operational noise.
 
